@@ -4,41 +4,77 @@ import System.Directory
 import Data.List
 import Data.Maybe
 
+
+type Name = String
+data PathTree = Folder Name [PathTree] | File String
+     deriving (Show)
+
+data Website = Website Name WebsiteType PathTree
+instance Show Website where
+    show (Website name websiteType _) = show (name, websiteType)
+
+data WebsiteType = Wordpress | Drupal | Unknown
+    deriving (Show)
+
+type WebsitePath = String
+
+
 testPath :: String
 testPath = "/home/mark/projects"
-
 fileFilter :: [String]
-fileFilter = ["."];
-
+fileFilter = [".", ".."]
 
 main :: IO()
 main = do
-	putStrLn "This is the wubstuts program"
+    testPrint
 
-data WebsiteType = Wordpress | Drupal | Unknown
-type WebsitePath = String
+testPrint :: IO ()
+testPrint = do
+    websites <- getWebsiteList testPath
+    putStrLn $ show (findTypes websites)
 
-getWebsiteList :: FilePath -> IO [WebsitePath]
-getWebsiteList = getFilteredDirectoryContents
+findTypes :: [Website] -> [Website]
+findTypes webs = map f webs
+    where f w@(Website name _ pathThree) = Website name (getWebsiteType w) pathThree
+
+getWebsiteType :: Website -> WebsiteType
+getWebsiteType (Website _ _  pathThree) 
+    | isWordPress pathThree = Wordpress
+    | isDrupal pathThree = Drupal
+    | otherwise = Unknown
+
+-- TODO: Make this break early
+isWordPress :: PathTree -> Bool
+isWordPress (File f)
+    | isInfixOf "wp-config.php" f = True
+    | otherwise = False
+isWordPress (Folder _ []) = False
+isWordPress (Folder p ps) 
+    | isInfixOf "wp-config.php" p = True
+    | otherwise = or $ map isWordPress ps
+
+isDrupal :: PathTree -> Bool
+isDrupal _ = False
+
+getWebsiteList :: FilePath -> IO [Website]
+getWebsiteList path = do
+                        folders <- getFilteredDirectoryContents path
+                        mapM f folders
+                        where f p = do 
+                                   pathThree <- getContentsTill (path ++ "/" ++ p) 0 20
+                                   return $ Website p Unknown pathThree
 
 filterDirectoryContents :: [FilePath] -> [FilePath]
 filterDirectoryContents paths = filter (not . flip matchStringAgaints fileFilter) paths
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
-getFilteredDirectoryContents path = do
-    unfiltered <- getDirectoryContents path
+getFilteredDirectoryContents filePath = do
+    unfiltered <- getDirectoryContents filePath
     return (filterDirectoryContents unfiltered)
 
 
 matchStringAgaints :: String -> [String] -> Bool
-matchStringAgaints strings = or . map (flip isInfixOf strings )
-
-getWebsiteType :: WebsitePath -> IO WebsiteType
-getWebsiteType _ = return Wordpress
-
-type Name = String
-data PathTree = Folder Name [PathTree] | File String
-     deriving (Show)
+matchStringAgaints strings = or . map (== strings )
 
 getContentsTill :: FilePath -> Int -> Int -> IO PathTree
 getContentsTill path depth maxDepth 
