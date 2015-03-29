@@ -18,6 +18,6 @@ Then you init a cabal sandbox
 
     cabal sandbox init
 
-Then  
+Then
 
     cabal install

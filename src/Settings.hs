@@ -1,12 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Settings 
+module Settings
 (
-    getSettings, 
-    Settings, 
-    website_path, 
+    getSettings,
+    Settings,
+    website_path,
     ignore_folders
-    
+
 ) where
 
 import Data.Aeson
@@ -27,7 +27,7 @@ instance FromJSON Settings where
   parseJSON (Object v) =
     Settings <$>
     (v .: "website_path")    <*>
-    (v .: "ignore_folders")    
+    (v .: "ignore_folders")
 
 
 getSettings :: IO Settings

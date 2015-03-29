@@ -37,7 +37,7 @@ findTypes webs = map f webs
     where f w@(Website name _ pathThree) = Website name (getWebsiteType w) pathThree
 
 getWebsiteType :: Website -> WebsiteType
-getWebsiteType (Website _ _  pathThree) 
+getWebsiteType (Website _ _  pathThree)
     | isWordPress pathThree = Wordpress
     | isDrupal pathThree = Drupal
     | otherwise = Unknown
@@ -57,7 +57,7 @@ getWebsiteList :: FilePath -> IO [Website]
 getWebsiteList path = do
                         folders <- getFilteredDirectoryContents path
                         mapM f folders
-                        where f p = do 
+                        where f p = do
                                    pathThree <- getContentsTill (path ++ "/" ++ p) 0 20
                                    return $ Website p Unknown pathThree
 
@@ -73,7 +73,7 @@ matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )
 
 getContentsTill :: FilePath -> Int -> Int -> IO PathTree
-getContentsTill path depth maxDepth 
+getContentsTill path depth maxDepth
     | depth >= maxDepth = return (Folder path [] )
     | otherwise = do
         paths <- getFilteredDirectoryContents path
@@ -83,7 +83,7 @@ getContentsTill path depth maxDepth
                         isFolder <- doesDirectoryExist $ p
                         if isFolder then do
                             subFolders <- getContentsTill p (depth+1) maxDepth
-                            return $ Folder p $ fromMaybe [] $ getContentFrom subFolders 
+                            return $ Folder p $ fromMaybe [] $ getContentFrom subFolders
                         else
                             return $ File p
 
