@@ -37,10 +37,9 @@ getSettings :: IO Settings
 getSettings = do
     settingsContent <- B.readFile settingsFile
     let settings = decode settingsContent :: Maybe Settings
-    if isJust settings then do
-        return $ fromMaybe (Settings "This won't happen anyway" 0 []) settings
-    else
-        error "Couldn't parse the settings file"
+    case settings of
+        Just s  -> return s
+        Nothing -> error "Couldn't parse settings file"
 
 getSetting :: (Settings -> a) -> IO a
 getSetting f = do
