@@ -61,18 +61,19 @@ getWebsiteList path = do
                                    pathThree <- getContentsTill (path ++ "/" ++ p) 20
                                    return $ Website p Unknown pathThree
 
-filterDirectoryContents :: [FilePath] -> [FilePath]
-filterDirectoryContents paths = filter (not . flip matchStringAgaints fileFilter) paths
+filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
+filterDirectoryContents paths filters = filter (not . flip matchStringAgaints filters) paths
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
+    settings <- getSettings
     unfiltered <- getDirectoryContents filePath
-    return (filterDirectoryContents unfiltered)
+    return $ filterDirectoryContents unfiltered (ignore_folders settings)
 
 matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )
 
-getContentsTill :: FilePath ->  Int -> IO PathTree
+getContentsTill :: FilePath -> Int -> IO PathTree
 getContentsTill path 0 = return (Folder path [] )
 getContentsTill path depth = do
     paths <- getFilteredDirectoryContents path
