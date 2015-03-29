@@ -58,7 +58,7 @@ getWebsiteList path = do
                         folders <- getFilteredDirectoryContents path
                         mapM f folders
                         where f p = do
-                                   pathThree <- getContentsTill (path ++ "/" ++ p) 0 20
+                                   pathThree <- getContentsTill (path ++ "/" ++ p) 20
                                    return $ Website p Unknown pathThree
 
 filterDirectoryContents :: [FilePath] -> [FilePath]
@@ -72,20 +72,19 @@ getFilteredDirectoryContents filePath = do
 matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )
 
-getContentsTill :: FilePath -> Int -> Int -> IO PathTree
-getContentsTill path depth maxDepth
-    | depth >= maxDepth = return (Folder path [] )
-    | otherwise = do
-        paths <- getFilteredDirectoryContents path
-        subFolders <- mapM f ( map ((++) $ path ++ "/" ) paths )
-        return $ Folder path subFolders
-            where f p = do
-                        isFolder <- doesDirectoryExist $ p
-                        if isFolder then do
-                            subFolders <- getContentsTill p (depth+1) maxDepth
-                            return $ Folder p $ fromMaybe [] $ getContentFrom subFolders
-                        else
-                            return $ File p
+getContentsTill :: FilePath ->  Int -> IO PathTree
+getContentsTill path 0 = return (Folder path [] )
+getContentsTill path depth = do
+    paths <- getFilteredDirectoryContents path
+    subFolders <- mapM f ( map ((++) $ path ++ "/" ) paths )
+    return $ Folder path subFolders
+        where f p = do
+                    isFolder <- doesDirectoryExist $ p
+                    if isFolder then do
+                        subFolders <- getContentsTill p (depth-1)
+                        return $ Folder p $ fromMaybe [] $ getContentFrom subFolders
+                    else
+                        return $ File p
 
 getContentFrom :: PathTree -> Maybe [PathTree]
 getContentFrom (Folder _ ps)  = Just ps
