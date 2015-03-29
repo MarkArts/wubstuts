@@ -15,7 +15,7 @@ import Control.Applicative
 import qualified Data.ByteString.Lazy as B
 
 settingsFile :: FilePath
-settingsFile = "config/settings-example.json"
+settingsFile = "config/settings.json"
 
 data Settings = Settings
     {
