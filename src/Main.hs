@@ -24,8 +24,8 @@ fileFilter = [".", ".."]
 
 main :: IO()
 main = do
-    settings <- getSettings
-    testPrint (website_path settings)
+    targetFolder <- getSetting website_path
+    testPrint targetFolder
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
@@ -58,7 +58,8 @@ getWebsiteList path = do
                         folders <- getFilteredDirectoryContents path
                         mapM f folders
                         where f p = do
-                                   pathThree <- getContentsTill (path ++ "/" ++ p) 20
+                                   depth <- getSetting search_depth
+                                   pathThree <- getContentsTill (path ++ "/" ++ p) depth
                                    return $ Website p Unknown pathThree
 
 filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
@@ -66,9 +67,9 @@ filterDirectoryContents paths filters = filter (not . flip matchStringAgaints fi
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
-    settings <- getSettings
+    dirFilter <- getSetting ignore_folders
     unfiltered <- getDirectoryContents filePath
-    return $ filterDirectoryContents unfiltered (ignore_folders settings)
+    return $ filterDirectoryContents unfiltered dirFilter
 
 matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )
