@@ -4,6 +4,7 @@ import System.Directory
 import Data.List
 import Data.Maybe
 
+import Settings
 
 type Name = String
 data PathTree = Folder Name [PathTree] | File String
@@ -18,19 +19,17 @@ data WebsiteType = Wordpress | Drupal | Unknown
 
 type WebsitePath = String
 
-
-testPath :: String
-testPath = "/home/mark/projects"
 fileFilter :: [String]
 fileFilter = [".", ".."]
 
 main :: IO()
 main = do
-    testPrint
+    settings <- getSettings
+    testPrint (website_path settings)
 
-testPrint :: IO ()
-testPrint = do
-    websites <- getWebsiteList testPath
+testPrint :: String -> IO ()
+testPrint websiteFolder = do
+    websites <- getWebsiteList websiteFolder
     putStrLn $ show (findTypes websites)
 
 findTypes :: [Website] -> [Website]
@@ -49,9 +48,7 @@ isWordPress (File f)
     | isInfixOf "wp-config.php" f = True
     | otherwise = False
 isWordPress (Folder _ []) = False
-isWordPress (Folder p ps) 
-    | isInfixOf "wp-config.php" p = True
-    | otherwise = or $ map isWordPress ps
+isWordPress (Folder _ ps) = or $ map isWordPress ps
 
 isDrupal :: PathTree -> Bool
 isDrupal _ = False
@@ -71,7 +68,6 @@ getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
     unfiltered <- getDirectoryContents filePath
     return (filterDirectoryContents unfiltered)
-
 
 matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )

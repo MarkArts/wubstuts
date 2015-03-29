@@ -1,0 +1,4 @@
+{
+    "website_path" : "/home/mark/projects",
+    "ignore_folders" : [".", "..", "releases", "builds"]
+}
