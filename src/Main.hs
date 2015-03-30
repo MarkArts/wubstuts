@@ -83,8 +83,12 @@ getContentsTill path depth = do
         where f p = do
                     isFolder <- doesDirectoryExist $ p
                     if isFolder then do
-                        subFolders <- getContentsTill p (pred depth)
-                        return $ Folder p $ fromMaybe [] $ getContentFrom subFolders
+                        permissions <- getPermissions p
+                        if readable permissions then do
+                            subFolders <- getContentsTill p (pred depth)
+                            return $ Folder p $ fromMaybe [] $ getContentFrom subFolders
+                        else
+                            return $ Folder p []
                     else
                         return $ File p
 
