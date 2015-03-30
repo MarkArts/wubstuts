@@ -7,10 +7,10 @@ import Data.Maybe
 import Settings
 
 type Name = String
-data PathTree = Folder Name [PathTree] | File String
+data Path = Folder Name [Path] | File String
      deriving (Show)
 
-data Website = Website Name WebsiteType PathTree
+data Website = Website Name WebsiteType Path
 instance Show Website where
     show (Website name websiteType _) = show (name, websiteType)
 
@@ -43,14 +43,14 @@ getWebsiteType (Website _ _  pathThree)
     | otherwise = Unknown
 
 -- TODO: Make this break early
-isWordPress :: PathTree -> Bool
+isWordPress :: Path -> Bool
 isWordPress (File f)
     | isInfixOf "wp-config.php" f = True
     | otherwise = False
 isWordPress (Folder _ []) = False
 isWordPress (Folder _ ps) = or $ map isWordPress ps
 
-isDrupal :: PathTree -> Bool
+isDrupal :: Path -> Bool
 isDrupal _ = False
 
 getWebsiteList :: FilePath -> IO [Website]
@@ -74,7 +74,7 @@ getFilteredDirectoryContents filePath = do
 matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )
 
-getContentsTill :: FilePath -> Int -> IO PathTree
+getContentsTill :: FilePath -> Int -> IO Path
 getContentsTill path 0 = return (Folder path [] )
 getContentsTill path depth = do
     paths <- getFilteredDirectoryContents path
@@ -88,6 +88,6 @@ getContentsTill path depth = do
                     else
                         return $ File p
 
-getContentFrom :: PathTree -> Maybe [PathTree]
+getContentFrom :: Path -> Maybe [Path]
 getContentFrom (Folder _ ps)  = Just ps
 getContentFrom  _ = Nothing
