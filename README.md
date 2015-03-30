@@ -21,3 +21,16 @@ Then you init a cabal sandbox
 Then
 
     cabal install
+
+## Running and debugging
+To debug the program you can use
+
+    cabal repl
+
+from the root dir
+
+To run the program you first need to build it then execute it
+
+    cabal install
+    cabal build
+    dist/build/wubstuts/wubstuts
