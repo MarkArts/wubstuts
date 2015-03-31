@@ -3,12 +3,23 @@ module Main where
 import System.Directory
 import Data.List
 import Data.Maybe
+import Data.List.Split
 
 import Settings
 
 type Name = String
-data Path = Folder Name [Path] | File String
+
+--todo: rename to somthing tat accuratly described iether a folder or file item
+data Path = Folder Name [Path] | File Name
      deriving (Show)
+
+getPathName :: Path -> Name
+getPathName (Folder n _) = n
+getPathName (File n ) = n
+
+--todo: Filename should be in the data Path
+getFileName :: Path -> Name
+getFileName p = last ( splitOn "/" (getPathName p) )
 
 data Website = Website Name WebsiteType Path
 instance Show Website where
@@ -19,9 +30,6 @@ data WebsiteType = Wordpress | Drupal | Unknown
 
 type WebsitePath = String
 
-fileFilter :: [String]
-fileFilter = [".", ".."]
-
 main :: IO()
 main = do
     targetFolder <- getSetting website_path
@@ -30,28 +38,45 @@ main = do
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
     websites <- getWebsiteList websiteFolder
-    putStrLn $ show (findTypes websites)
+    websitesWithType <- findTypes websites
+    putStrLn $ show websitesWithType
 
-findTypes :: [Website] -> [Website]
-findTypes webs = map f webs
-    where f w@(Website name _ pathThree) = Website name (getWebsiteType w) pathThree
+findTypes :: [Website] -> IO [Website]
+findTypes ws = do
+    mapM( 
+        \w@(Website name _ pathThree) -> do 
+            t <- getWebsiteType w 
+            return $ Website name t pathThree 
+        ) ws
 
-getWebsiteType :: Website -> WebsiteType
-getWebsiteType (Website _ _  pathThree)
-    | isWordPress pathThree = Wordpress
-    | isDrupal pathThree = Drupal
-    | otherwise = Unknown
+--todo: replace this with a more dynamic system
+getWebsiteType :: Website -> IO WebsiteType
+getWebsiteType (Website _ _  pathThree) = do
+    wp <- isWordPress pathThree
+    if wp then do
+        return Wordpress
+    else do
+        dp <- isDrupal pathThree
+        if dp then do
+            return Drupal
+        else
+            return Unknown
 
--- TODO: Make this break early
-isWordPress :: Path -> Bool
-isWordPress (File f)
-    | isInfixOf "wp-config.php" f = True
-    | otherwise = False
-isWordPress (Folder _ []) = False
-isWordPress (Folder _ ps) = or $ map isWordPress ps
+isWordPress :: Path -> IO Bool
+isWordPress p = do 
+    filter <- getSetting wordpress_site
+    return $ or ( map (pathMatches p) filter )
 
-isDrupal :: Path -> Bool
-isDrupal _ = False
+isDrupal :: Path -> IO Bool
+isDrupal p = do 
+    filter <- getSetting drupal_site
+    return $ or ( map (pathMatches p) filter )
+
+-- todo: rewrite so that a pathItem has a path and name property so we don't need to use getFileName
+pathMatches :: Path -> [FilePath] -> Bool
+pathMatches f@(File _) m = matchStringAgaints (getFileName f) m
+pathMatches f@(Folder _ []) m = matchStringAgaints (getFileName f) m
+pathMatches f@(Folder _ ps) m = or $ (matchStringAgaints (getFileName f) m) : (map (flip pathMatches m) ps)
 
 getWebsiteList :: FilePath -> IO [Website]
 getWebsiteList path = do

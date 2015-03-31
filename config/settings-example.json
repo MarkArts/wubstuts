@@ -1,5 +1,12 @@
 {
     "website_path" : "/home/mark/projects",
     "search_depth" : 3,
-    "ignore_folders" : [".", "..", "releases", "builds"]
+    "ignore_folders" : [".", "..", "releases", "builds", ".git", ".svn", ".node_modules", ".cabal-sandbox"],
+    "wordpress_site" : [
+    	["wp-cli.yml"],
+    	["wp-config.php"]
+    ],
+    "drupal_site" : [
+    	["themes", "sites", "modules"]
+    ]
 }

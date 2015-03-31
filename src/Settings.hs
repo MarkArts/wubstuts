@@ -7,7 +7,9 @@ module Settings
     Settings,
     website_path,
     search_depth,
-    ignore_folders
+    ignore_folders,
+    wordpress_site,
+    drupal_site
 
 ) where
 
@@ -23,15 +25,19 @@ data Settings = Settings
     {
         website_path :: FilePath,
         search_depth :: Int,
-        ignore_folders :: [FilePath]
+        ignore_folders :: [FilePath],
+        wordpress_site :: [[FilePath]],
+        drupal_site :: [[FilePath]]
     } deriving (Show)
 
 instance FromJSON Settings where
   parseJSON (Object v) =
     Settings <$>
-    (v .: "website_path")    <*>
-    (v .: "search_depth")    <*>
-    (v .: "ignore_folders")
+    (v .: "website_path")       <*>
+    (v .: "search_depth")       <*>
+    (v .: "ignore_folders")     <*>
+    (v .: "wordpress_site")     <*>
+    (v .: "drupal_site")
 
 getSettings :: IO Settings
 getSettings = do
