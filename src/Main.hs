@@ -37,7 +37,8 @@ main = do
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
-    websites <- getWebsiteList websiteFolder
+    depth <- getSetting search_depth 
+    websites <- getWebsiteList websiteFolder depth
     websitesWithType <- findTypes websites
     putStrLn $ show websitesWithType
 
@@ -78,12 +79,11 @@ pathMatches f@(File _) m = matchStringAgaints (getFileName f) m
 pathMatches f@(Folder _ []) m = matchStringAgaints (getFileName f) m
 pathMatches f@(Folder _ ps) m = or $ (matchStringAgaints (getFileName f) m) : (map (flip pathMatches m) ps)
 
-getWebsiteList :: FilePath -> IO [Website]
-getWebsiteList path = do
+getWebsiteList :: FilePath -> Int -> IO [Website]
+getWebsiteList path depth = do
                         folders <- getFilteredDirectoryContents path
                         mapM f folders
                         where f p = do
-                                   depth <- getSetting search_depth
                                    pathThree <- getContentsTill (path ++ "/" ++ p) depth
                                    return $ Website p Unknown pathThree
 
