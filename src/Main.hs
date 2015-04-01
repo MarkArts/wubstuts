@@ -34,10 +34,17 @@ main = do
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
-    depth <- getSetting search_depth 
-    websites <- getWebsiteList websiteFolder depth
-    websitesWithType <- findTypes websites
-    putStrLn $ show websitesWithType
+   -- depth <- getSetting search_depth 
+   -- rootPath <- getContentsTill websiteFolder 
+    putStrLn "ENd of thingy"
+    --websites <- getWebsiteList websiteFolder depth
+    --websitesWithType <- findTypes websites
+    --putStrLn $ show websitesWithType
+
+findWebsites :: Path -> IO (Maybe [Website])
+findWebsites (File _) = return Nothing
+findWebsites (Folder p ps) = return Nothing
+
 
 findTypes :: [Website] -> IO [Website]
 findTypes ws = do
