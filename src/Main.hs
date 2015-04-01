@@ -1,6 +1,7 @@
 module Main where
 
 import System.Directory
+import System.FilePath.Posix
 import Data.List
 import Data.Maybe
 import Data.List.Split
@@ -84,7 +85,7 @@ getWebsiteList path depth = do
                         folders <- getFilteredDirectoryContents path
                         mapM f folders
                         where f p = do
-                                   pathThree <- getContentsTill (path ++ "/" ++ p) depth
+                                   pathThree <- getContentsTill (path </> p) depth
                                    return $ Website p Unknown pathThree
 
 filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
@@ -103,7 +104,7 @@ getContentsTill :: FilePath -> Int -> IO Path
 getContentsTill path 0 = return (Folder path [] )
 getContentsTill path depth = do
     paths <- getFilteredDirectoryContents path
-    subFolders <- mapM f ( map ((++) $ path ++ "/" ) paths )
+    subFolders <- mapM f ( map (path </>) paths )
     return $ Folder path subFolders
         where f p = do
                     isFolder <- doesDirectoryExist $ p
@@ -111,7 +112,9 @@ getContentsTill path depth = do
                         permissions <- getPermissions p
                         if readable permissions then do
                             subFolders <- getContentsTill p (pred depth)
-                            return $ Folder p $ fromMaybe [] $ getContentFrom subFolders
+                            return $ case getContentFrom subFolders of
+                                Just a -> Folder p a
+                                Nothing -> Folder p []
                         else
                             return $ Folder p []
                     else
