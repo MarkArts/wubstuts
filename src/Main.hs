@@ -76,7 +76,6 @@ isDrupal p = do
     dpFilter <- getSetting drupal_site
     return $ or ( map (pathMatches p) dpFilter )
 
--- todo: ["modules"] currently matches ["sites", "modules"] because files are matched against the matchSet not vise Versa
 pathMatches :: Path -> [FilePath] -> Bool
 pathMatches (File _) _ = False
 pathMatches (Folder _ []) _ = False
