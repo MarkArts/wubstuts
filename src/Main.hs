@@ -3,6 +3,7 @@ module Main where
 import System.Directory
 import System.FilePath.Posix
 import Settings
+import Control.Exception
 
 type Name = String
 
@@ -107,19 +108,24 @@ getContentsTill path depth = do
     paths <- getFilteredDirectoryContents path
     subFolders <- mapM f ( map (path </>) paths )
     return $ Folder path subFolders
-        where f p = do
-                    isFolder <- doesDirectoryExist $ p
-                    if isFolder then do
-                        permissions <- getPermissions p
-                        if readable permissions then do
-                            subFolders <- getContentsTill p (pred depth)
-                            return $ case getContentFrom subFolders of
-                                Just a -> Folder p a
-                                Nothing -> Folder p []
-                        else
+        where
+            f :: FilePath -> IO Path
+            f p = do
+                isFolder <- doesDirectoryExist $ p
+                if isFolder then do
+                    result <- try( do
+                                subFolders <- getContentsTill p (pred depth)
+                                case getContentFrom subFolders of
+                                    Just a -> return $ Folder p a
+                                    Nothing -> return $  Folder p []
+                             ) :: IO (Either SomeException Path)
+                    case result of
+                        Left ex -> do
+                            putStrLn $ "Exception when trying to read dir: " ++ show ex
                             return $ Folder p []
-                    else
-                        return $ File p
+                        Right val -> return val
+                else
+                    return $ File p
 
 getContentFrom :: Path -> Maybe [Path]
 getContentFrom (Folder _ ps)  = Just ps
