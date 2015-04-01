@@ -2,10 +2,6 @@ module Main where
 
 import System.Directory
 import System.FilePath.Posix
-import Data.List
-import Data.Maybe
-import Data.List.Split
-
 import Settings
 
 type Name = String
@@ -18,9 +14,9 @@ getPathName :: Path -> Name
 getPathName (Folder n _) = n
 getPathName (File n ) = n
 
-data Website = Website Name WebsiteType Path
+data Website = Website WebsiteType Path
 instance Show Website where
-    show (Website name websiteType _) = show (name, websiteType)
+    show (Website websiteType p) = show (websiteType, getPathName p)
 
 data WebsiteType = Wordpress | Drupal | Unknown
     deriving (Show)
@@ -34,47 +30,56 @@ main = do
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
-    depth <- getSetting search_depth 
-    websites <- getWebsiteList websiteFolder depth
-    websitesWithType <- findTypes websites
-    putStrLn $ show websitesWithType
+    depth <- getSetting search_depth
+    rootPath <- getContentsTill websiteFolder depth
+    websites <- findWebsites rootPath
+    putStrLn $ show websites
+    --websites <- getWebsiteList websiteFolder depth
+    --websitesWithType <- findTypes websites
+    --putStrLn $ show websitesWithType
 
-findTypes :: [Website] -> IO [Website]
-findTypes ws = do
-    mapM( 
-        \w@(Website name _ pathThree) -> do 
-            t <- getWebsiteType w 
-            return $ Website name t pathThree 
-        ) ws
+findWebsites :: Path -> IO [Website]
+findWebsites (File _) = return []
+findWebsites p@(Folder _ ps) = do
+    wT <- getWebsiteType p
+    case wT of
+        Unknown -> do
+            childs <- mapM findWebsites ps
+            return $ concat childs
+            --F.foldlM (\a x -> (a ++ (findWebsites x) ) ) [] ps
+            --Unknown ->  $ mapM (\x -> findWebsites x) ps
+        _ -> return $ [(Website wT p)]
 
---todo: replace this with a more dynamic system
-getWebsiteType :: Website -> IO WebsiteType
-getWebsiteType (Website _ _  pathThree) = do
-    wp <- isWordPress pathThree
+
+--todo: refactor to something less ridiculous
+getWebsiteType :: Path -> IO WebsiteType
+getWebsiteType (File _ ) = return Unknown
+getWebsiteType p =  do
+    wp <- isWordPress p
     if wp then do
         return Wordpress
     else do
-        dp <- isDrupal pathThree
+        dp <- isDrupal p
         if dp then do
             return Drupal
         else
             return Unknown
 
 isWordPress :: Path -> IO Bool
-isWordPress p = do 
-    filter <- getSetting wordpress_site
-    return $ or ( map (pathMatches p) filter )
+isWordPress p = do
+    wpFitler <- getSetting wordpress_site
+    return $ or ( map (pathMatches p) wpFitler )
 
 isDrupal :: Path -> IO Bool
-isDrupal p = do 
-    filter <- getSetting drupal_site
-    return $ or ( map (pathMatches p) filter )
+isDrupal p = do
+    dpFilter <- getSetting drupal_site
+    return $ or ( map (pathMatches p) dpFilter )
 
--- todo: rewrite so that a pathItem has a path and name property so we don't need to use getFileName
+-- todo: ["modules"] currently matches ["sites", "modules"] because files are matched against the matchSet not vise Versa
 pathMatches :: Path -> [FilePath] -> Bool
-pathMatches f@(File _) m = matchStringAgaints (takeFileName $ getPathName f) m
-pathMatches f@(Folder _ []) m = matchStringAgaints (takeFileName $ getPathName f) m
-pathMatches f@(Folder _ ps) m = or $ (matchStringAgaints (takeFileName $ getPathName f) m) : (map (flip pathMatches m) ps)
+pathMatches (File _) _ = False
+pathMatches (Folder _ []) _ = False
+pathMatches (Folder _ ps) m = and $ map (\x -> matchStringAgaints x (map (takeFileName . getPathName) ps)) m
 
 getWebsiteList :: FilePath -> Int -> IO [Website]
 getWebsiteList path depth = do
@@ -82,7 +87,7 @@ getWebsiteList path depth = do
                         mapM f folders
                         where f p = do
                                    pathThree <- getContentsTill (path </> p) depth
-                                   return $ Website p Unknown pathThree
+                                   return $ Website Unknown pathThree
 
 filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
 filterDirectoryContents paths filters = filter (not . flip matchStringAgaints filters) paths

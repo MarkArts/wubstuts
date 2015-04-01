@@ -14,7 +14,6 @@ module Settings
 ) where
 
 import Data.Aeson
-import Data.Maybe
 import Control.Applicative
 import qualified Data.ByteString.Lazy as B
 
