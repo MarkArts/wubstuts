@@ -11,16 +11,12 @@ import Settings
 type Name = String
 
 --todo: rename to somthing tat accuratly described iether a folder or file item
-data Path = Folder Name [Path] | File Name
+data Path = Folder FilePath [Path] | File Name
      deriving (Show)
 
 getPathName :: Path -> Name
 getPathName (Folder n _) = n
 getPathName (File n ) = n
-
---todo: Filename should be in the data Path
-getFileName :: Path -> Name
-getFileName p = last ( splitOn "/" (getPathName p) )
 
 data Website = Website Name WebsiteType Path
 instance Show Website where
@@ -76,9 +72,9 @@ isDrupal p = do
 
 -- todo: rewrite so that a pathItem has a path and name property so we don't need to use getFileName
 pathMatches :: Path -> [FilePath] -> Bool
-pathMatches f@(File _) m = matchStringAgaints (getFileName f) m
-pathMatches f@(Folder _ []) m = matchStringAgaints (getFileName f) m
-pathMatches f@(Folder _ ps) m = or $ (matchStringAgaints (getFileName f) m) : (map (flip pathMatches m) ps)
+pathMatches f@(File _) m = matchStringAgaints (takeFileName $ getPathName f) m
+pathMatches f@(Folder _ []) m = matchStringAgaints (takeFileName $ getPathName f) m
+pathMatches f@(Folder _ ps) m = or $ (matchStringAgaints (takeFileName $ getPathName f) m) : (map (flip pathMatches m) ps)
 
 getWebsiteList :: FilePath -> Int -> IO [Website]
 getWebsiteList path depth = do
