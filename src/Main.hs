@@ -4,6 +4,7 @@ import System.Directory
 import System.FilePath.Posix
 import Settings
 import Control.Exception
+import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
 type Name = String
 
@@ -26,12 +27,12 @@ type WebsitePath = String
 
 main :: IO()
 main = do
-    targetFolder <- getSetting website_path
+    targetFolder <- evalStateT (getSetting website_path) Nothing
     testPrint targetFolder
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
-    depth <- getSetting search_depth
+    depth <- evalStateT (getSetting search_depth) Nothing
     rootPath <- getContentsTill websiteFolder depth
     websites <- findWebsites rootPath
     putStrLn $ show websites
@@ -68,12 +69,12 @@ getWebsiteType p =  do
 
 isWordPress :: Path -> IO Bool
 isWordPress p = do
-    wpFitler <- getSetting wordpress_site
+    wpFitler <- evalStateT (getSetting wordpress_site) Nothing
     return $ or ( map (pathMatches p) wpFitler )
 
 isDrupal :: Path -> IO Bool
 isDrupal p = do
-    dpFilter <- getSetting drupal_site
+    dpFilter <- evalStateT (getSetting drupal_site) Nothing
     return $ or ( map (pathMatches p) dpFilter )
 
 pathMatches :: Path -> [FilePath] -> Bool
@@ -94,7 +95,7 @@ filterDirectoryContents paths filters = filter (not . flip matchStringAgaints fi
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
-    dirFilter <- getSetting ignore_folders
+    dirFilter <- evalStateT (getSetting ignore_folders) Nothing
     unfiltered <- getDirectoryContents filePath
     return $ filterDirectoryContents unfiltered dirFilter
 
