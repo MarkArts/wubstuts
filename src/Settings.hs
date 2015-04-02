@@ -47,6 +47,5 @@ getSettings = do
         Nothing -> error "Couldn't parse settings file"
 
 getSetting :: (Settings -> a) -> IO a
-getSetting f = do
-    settings <- getSettings
-    return $ f settings
+getSetting f = getSettings >>= return . f
+
