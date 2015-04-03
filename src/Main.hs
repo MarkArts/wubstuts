@@ -13,9 +13,6 @@ data Website = Website WebsiteType (Tree String)
 instance Show Website where
     show (Website websiteType (Node path _ )) = show (websiteType, path)
 
-data WebsiteType = Wordpress | Drupal | Unknown
-    deriving (Show)
-
 main :: IO()
 main = do
     targetFolder <- evalStateT (Shit.getSetting Shit.website_path) Nothing
@@ -40,7 +37,6 @@ findWebsites t@(Node _ ps) = do
             childs <- mapM findWebsites ps
             return $ concat childs
         _ -> return $ [(Website wT t)]
-
 
 --todo: refactor to something less ridiculous
 getWebsiteType :: Tree FilePath -> IO WebsiteType
@@ -72,7 +68,7 @@ pathMatches (Node _ []) _ = False
 pathMatches (Node _ ts) m = and $ map (\x -> matchStringAgaints x (map (\(Node p _) -> takeFileName p) ts)) m
 
 filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
-filterDirectoryContents paths filters = let normalFitlered = filter (not . flip matchStringAgaints filters) paths 
+filterDirectoryContents paths filters = let normalFitlered = filter (not . flip matchStringAgaints filters) paths
                                         in  filter (\x -> not ( '.' == head x)) normalFitlered
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]

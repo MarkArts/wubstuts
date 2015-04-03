@@ -1,17 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Settings
-(
-    getSettings,
-    getSetting,
-    Settings,
-    website_path,
-    search_depth,
-    ignore_folders,
-    wordpress_site,
-    drupal_site
-
-) where
+module Settings where
 
 import Data.Aeson
 import Control.Applicative
@@ -21,14 +10,29 @@ import qualified Data.ByteString.Lazy as B
 settingsFile :: FilePath
 settingsFile = "config/settings.json"
 
-data Settings = Settings
-    {
-        website_path :: FilePath,
-        search_depth :: Int,
-        ignore_folders :: [FilePath],
-        wordpress_site :: [[FilePath]],
-        drupal_site :: [[FilePath]]
-    } deriving (Show)
+
+type Conditions = [[FilePath]]
+
+data WebsiteType = Wordpress | Drupal | Unknown
+    deriving (Show)
+
+instance FromJSON WebsiteType where
+  parseJSON "wordpress" = return Wordpress
+  parseJSON "drupal" = return Drupal
+  parseJSON _ = return Unknown
+
+--todo: rename to somthing better
+data WebsiteFilter = WebsiteFilter {
+    getFilterType :: WebsiteType,
+    getConditions :: Conditions
+} deriving (Show)
+
+data Settings = Settings {
+        getWebsitePath :: FilePath,
+        getSearchDepth :: Int,
+        getIgnoreFolders :: [FilePath],
+        getFilters :: [WebsiteFilter]
+} deriving (Show)
 
 -- A stateful Settings monad to avoid parsing the
 -- entire file on each getSetting call
@@ -40,17 +44,22 @@ instance FromJSON Settings where
     (v .: "website_path")       <*>
     (v .: "search_depth")       <*>
     (v .: "ignore_folders")     <*>
-    (v .: "wordpress_site")     <*>
-    (v .: "drupal_site")
+    (v .: "filters")
+
+instance FromJSON WebsiteFilter where
+  parseJSON (Object v) =
+    WebsiteFilter <$>
+    (v .: "type")             <*>
+    (v .: "conditions")
 
 -- Parse the Settings file
 parseSettings :: IO Settings
 parseSettings = do
     settingsContent <- B.readFile settingsFile
-    let settings = decode settingsContent :: Maybe Settings
+    let settings = eitherDecode settingsContent :: Either String Settings
     case settings of
-        Just s  -> return s
-        Nothing -> error "Couldn't parse settings file"
+        Left x -> error $ show x
+        Right s -> return s
 
 -- Put the Settings into the SettingsT state monad
 getSettings :: SettingsT ()
