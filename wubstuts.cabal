@@ -19,6 +19,6 @@ executable wubstuts
   main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       mtl, filepath, split, bytestring, aeson, directory, base >=4.7
+  build-depends:       containers, mtl, filepath, split, bytestring, aeson, directory, base >=4.7
   hs-source-dirs:      src
   default-language:    Haskell2010

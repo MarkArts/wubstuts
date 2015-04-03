@@ -34,3 +34,10 @@ To run the program you first need to build it then execute it
     cabal install
     cabal build
     dist/build/wubstuts/wubstuts
+
+## TODO
+Refactor Path data type to Data.Tree
+Refactor the settings
+Make the website types more dynamic (getWebsiteType)
+Find out the version of a website
+Find out the plugin / modules a website uses

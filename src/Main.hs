@@ -1,6 +1,7 @@
 module Main where
 
 import System.Directory
+import Data.Tree
 import System.FilePath.Posix
 import qualified Settings as Shit -- Refactor the settings to somthing les syntaxtual anoying
 import Control.Exception
@@ -49,7 +50,7 @@ findWebsites p@(Folder _ ps) = do
             childs <- mapM findWebsites ps
             return $ concat childs
             --F.foldlM (\a x -> (a ++ (findWebsites x) ) ) [] ps
-            --Unknown ->  $ mapM (\x -> findWebsites x) ps
+            --mapM (\x -> findWebsites x) ps
         _ -> return $ [(Website wT p)]
 
 
@@ -97,8 +98,12 @@ filterDirectoryContents paths filters = let normalFitlered = filter (not . flip 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
     dirFilter <- evalStateT (Shit.getSetting Shit.ignore_folders) Nothing
-    unfiltered <- getDirectoryContents filePath
-    return $ filterDirectoryContents unfiltered dirFilter
+    result <- try( getDirectoryContents filePath ) :: IO (Either SomeException [FilePath])
+    case result of
+        Left ex -> do
+            putStrLn $ "Exception when trying to read dir: " ++ show ex
+            return $ []
+        Right childs -> return $ filterDirectoryContents childs dirFilter
 
 matchStringAgaints :: String -> [String] -> Bool
 matchStringAgaints strings = or . map (== strings )
@@ -131,3 +136,16 @@ getContentsTill path depth = do
 getContentFrom :: Path -> Maybe [Path]
 getContentFrom (Folder _ ps)  = Just ps
 getContentFrom  _ = Nothing
+
+
+buildDirTree :: FilePath -> Int -> IO (Tree String)
+buildDirTree p 0 = return $ Node p []
+buildDirTree p depth = do
+    isDir <- doesDirectoryExist p
+    if isDir then do
+        children <- getFilteredDirectoryContents p
+        let subFolders = map (p </>) children
+        subTrees <- mapM (\x -> buildDirTree x (pred depth)) subFolders
+        return $ Node p subTrees
+    else
+        return $ Node p []
