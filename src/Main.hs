@@ -91,7 +91,8 @@ getWebsiteList path depth = do
                                    return $ Website Unknown pathThree
 
 filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
-filterDirectoryContents paths filters = filter (not . flip matchStringAgaints filters) paths
+filterDirectoryContents paths filters = let normalFitlered = filter (not . flip matchStringAgaints filters) paths 
+                                        in  filter (\x -> not ( '.' == head x)) normalFitlered
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
