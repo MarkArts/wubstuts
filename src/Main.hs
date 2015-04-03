@@ -2,7 +2,7 @@ module Main where
 
 import System.Directory
 import System.FilePath.Posix
-import Settings
+import qualified Settings as Shit -- Refactor the settings to somthing les syntaxtual anoying
 import Control.Exception
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
@@ -27,12 +27,12 @@ type WebsitePath = String
 
 main :: IO()
 main = do
-    targetFolder <- evalStateT (getSetting website_path) Nothing
+    targetFolder <- evalStateT (Shit.getSetting Shit.website_path) Nothing
     testPrint targetFolder
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
-    depth <- evalStateT (getSetting search_depth) Nothing
+    depth <- evalStateT (Shit.getSetting Shit.search_depth) Nothing
     rootPath <- getContentsTill websiteFolder depth
     websites <- findWebsites rootPath
     putStrLn $ show websites
@@ -69,12 +69,12 @@ getWebsiteType p =  do
 
 isWordPress :: Path -> IO Bool
 isWordPress p = do
-    wpFitler <- evalStateT (getSetting wordpress_site) Nothing
+    wpFitler <- evalStateT (Shit.getSetting Shit.wordpress_site) Nothing
     return $ or ( map (pathMatches p) wpFitler )
 
 isDrupal :: Path -> IO Bool
 isDrupal p = do
-    dpFilter <- evalStateT (getSetting drupal_site) Nothing
+    dpFilter <- evalStateT (Shit.getSetting Shit.drupal_site) Nothing
     return $ or ( map (pathMatches p) dpFilter )
 
 pathMatches :: Path -> [FilePath] -> Bool
@@ -95,7 +95,7 @@ filterDirectoryContents paths filters = filter (not . flip matchStringAgaints fi
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
-    dirFilter <- evalStateT (getSetting ignore_folders) Nothing
+    dirFilter <- evalStateT (Shit.getSetting Shit.ignore_folders) Nothing
     unfiltered <- getDirectoryContents filePath
     return $ filterDirectoryContents unfiltered dirFilter
 
