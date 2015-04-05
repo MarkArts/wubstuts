@@ -25,7 +25,7 @@ findWebsites (Node _ []) = return []
 findWebsites t@(Node _ ps) = do
     wT <- getWebsiteType t
     case wT of
-        Unknown -> do
+        UnknownType -> do
             -- todo: refactor to 1 line
             childs <- mapM findWebsites ps
             return $ concat childs
@@ -33,25 +33,25 @@ findWebsites t@(Node _ ps) = do
 
 -- todo: Refactor to not use foldl?
 getWebsiteType :: DirTree -> IO WebsiteType
-getWebsiteType (Node _ []) = return Unknown
+getWebsiteType (Node _ []) = return UnknownType
 getWebsiteType t =  do
     filters <- evalStateT (getSetting getFilters) Nothing
     return $ foldl (\acc x -> do
             case acc of
-                Unknown ->  if or ( map (treeMatches t) (getConditions x) )  then
+                UnknownType ->  if or ( map (treeMatches t) (getConditions x) )  then
                                 getFilterType x
                             else
-                                Unknown
+                                UnknownType
                 _ -> acc
-        ) Unknown filters
+        ) UnknownType filters
 
 -- Maybe do something like this instead of the fold
    {- return $ foldUntil
-                (not . (==) Unknown)
+                (not . (==) UnknownType)
                 (\x ->  if or ( map (treeMatches t) (getConditions x)) then
                             getFilterType x
                         else
-                            Unknown
+                            UnknownType
                 )
                 filters
 
