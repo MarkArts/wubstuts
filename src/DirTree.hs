@@ -5,6 +5,7 @@ import System.FilePath.Posix
 import System.Directory
 import Control.Monad.State
 import Settings
+import Types
 import Control.Exception
 
 cd :: DirTree -> [FilePath] -> Maybe (DirTree)

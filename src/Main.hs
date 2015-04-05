@@ -4,6 +4,7 @@ import Data.Tree
 import Settings
 import Types.Wordpress
 import DirTree
+import Types
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
 main :: IO()

@@ -3,33 +3,13 @@
 module Settings where
 
 import Data.Aeson
-import Data.Tree
 import Control.Applicative
 import Control.Monad.State
 import qualified Data.ByteString.Lazy as B
+import Types
 
 settingsFile :: FilePath
 settingsFile = "config/settings.json"
-
---todo: move this to DirTree or someplace else
-type DirTree = Tree FilePath
-
-type Name = String
-type Version = String
-
-data Website = Website WebsiteType Version (DirTree)
-instance Show Website where
-    show (Website websiteType version (Node path _ )) = show (websiteType, version, path)
-
-type Conditions = [[FilePath]]
-
-data WebsiteType = Wordpress | Drupal | Unknown
-    deriving (Show)
-
-instance FromJSON WebsiteType where
-  parseJSON "wordpress" = return Wordpress
-  parseJSON "drupal" = return Drupal
-  parseJSON _ = return Unknown
 
 --todo: rename to somthing better
 data WebsiteFilter = WebsiteFilter {

@@ -2,8 +2,8 @@ module Types.Wordpress where
 
 import Text.Parsec
 import Data.Tree
-import Settings
 import DirTree
+import Types
 
 pluginsFolder :: [FilePath]
 pluginsFolder = ["wp-content", "plugins"]
