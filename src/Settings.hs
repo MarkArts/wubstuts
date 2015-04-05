@@ -14,7 +14,7 @@ settingsFile = "config/settings.json"
 type Conditions = [[FilePath]]
 
 data WebsiteType = Wordpress | Drupal | Unknown
-    deriving (Show)
+    deriving (Show, Eq)
 
 instance FromJSON WebsiteType where
   parseJSON "wordpress" = return Wordpress
