@@ -16,7 +16,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 executable wubstuts
-  main-is:             Settings.hs
+  main-is:             Main.hs
   -- other-modules:
   -- other-extensions:
   build-depends:       containers, mtl, filepath, split, bytestring, aeson, directory, base >=4.7
