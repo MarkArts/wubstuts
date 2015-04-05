@@ -10,15 +10,16 @@ pluginsFolder = ["wp-content", "plugins"]
 versionFileLocation :: [FilePath]
 versionFileLocation = ["wp-includes", "version.php"]
 
-wpVersion :: Website -> IO (Either String Version)
+-- todo: add error reporting
+wpVersion :: Website -> IO WebsiteVersion
 wpVersion (Website _ _ t) = do
     case cd t versionFileLocation of
-        Nothing -> return $ Left "could not find settings file"
+        Nothing -> return UnknownVersion
         Just f -> do
             versionFile <- readFile (rootLabel f)
             case parse wpParseVersionFile "??" versionFile of
-                Left e -> return $ Left $ show e
-                Right v -> return $ Right v
+                Left _ -> return UnknownVersion
+                Right v -> return $ Version v
 
 wpParseVersionFile :: Parsec String () String
 wpParseVersionFile = do

@@ -29,7 +29,7 @@ findWebsites t@(Node _ ps) = do
             -- todo: refactor to 1 line
             childs <- mapM findWebsites ps
             return $ concat childs
-        _ -> return $ [(Website wT "" t)]
+        _ -> return $ [(Website wT UnknownVersion t)]
 
 -- todo: Refactor to not use foldl?
 getWebsiteType :: DirTree -> IO WebsiteType
@@ -67,7 +67,5 @@ foldUntil check f val = do
 findWebsiteVersion :: Website -> IO Website
 findWebsiteVersion w@(Website Wordpress _ td) = do
                                             t <- wpVersion w
-                                            case t of
-                                                Left v -> return $ Website Wordpress v td
-                                                Right v -> return $ Website Wordpress v td
+                                            return $ Website Wordpress t td
 findWebsiteVersion w@(Website Drupal _ _) = return $ w
