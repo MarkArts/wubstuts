@@ -3,7 +3,7 @@ module Main where
 import System.Directory
 import Data.Tree
 import System.FilePath.Posix
-import Settings -- Refactor the settings to somthing les syntaxtual anoying
+import Settings
 import Control.Exception
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
@@ -24,8 +24,6 @@ testPrint websiteFolder = do
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
     putStrLn $ show websites
-    --websitesWithType <- findTypes websites
-    --putStrLn $ show websitesWithType
 
 findWebsites :: Tree FilePath -> IO [Website]
 findWebsites (Node _ []) = return []
@@ -52,7 +50,7 @@ getWebsiteType t =  do
                 _ -> acc
         ) Unknown filters
 
--- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool
+-- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool?
 treeMatches :: Tree FilePath -> [FilePath] -> Bool
 treeMatches (Node _ []) _ = False
 treeMatches (Node _ ts) m = and $ map (\x -> matchStringAgaints x (map (\(Node p _) -> takeFileName p) ts)) m
