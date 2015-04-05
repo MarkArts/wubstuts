@@ -50,6 +50,26 @@ getWebsiteType t =  do
                 _ -> acc
         ) Unknown filters
 
+
+-- Maybe do something like this instead of the fold
+   {- return $ foldUntil
+                (not . (==) Unknown)
+                (\x ->  if or ( map (treeMatches t) (getConditions x)) then
+                            getFilterType x
+                        else
+                            Unknown
+                )
+                filters
+
+foldUntil :: (b->Bool) -> (a->b) -> [a] -> b
+foldUntil _ f [l] = f l
+foldUntil check f val = do
+                        let next = f $ head val
+                        if check next then
+                            next
+                        else
+                            foldUntil check f (tail val)-}
+
 -- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool?
 treeMatches :: Tree FilePath -> [FilePath] -> Bool
 treeMatches (Node _ []) _ = False
