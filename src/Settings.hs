@@ -4,7 +4,6 @@ module Settings where
 
 import Data.Aeson
 import Data.Tree
-import System.FilePath.Posix
 import Control.Applicative
 import Control.Monad.State
 import qualified Data.ByteString.Lazy as B
@@ -12,10 +11,13 @@ import qualified Data.ByteString.Lazy as B
 settingsFile :: FilePath
 settingsFile = "config/settings.json"
 
+--todo: move this to DirTree or someplace else
+type DirTree = Tree FilePath
+
 type Name = String
 type Version = String
 
-data Website = Website WebsiteType Version (Tree FilePath)
+data Website = Website WebsiteType Version (DirTree)
 instance Show Website where
     show (Website websiteType version (Node path _ )) = show (websiteType, version, path)
 
@@ -79,18 +81,3 @@ getSettings = do
 -- Calling getSetting if the Settings are missing in SettingsT
 getSetting :: (Settings -> a) -> SettingsT a
 getSetting f = get >>= maybe (getSettings >> getSetting f) (return . f)
-
-
-cd :: Tree FilePath -> [FilePath] -> Maybe (Tree FilePath)
-cd (Node _ []) _ = Nothing
-cd t@(Node a _) [p] = getChild t (a </> p)
-cd t@(Node a _) ps = case getChild t ( a </> (head ps) ) of
-                        Just child -> cd child (tail ps)
-                        Nothing -> Nothing
-
-getChild :: (Eq a) => Tree a -> a -> Maybe (Tree a)
-getChild (Node _ []) _ = Nothing
-getChild (Node _ xs) p = foldl (\acc child ->
-                                    case acc of
-                                        Nothing -> if rootLabel child == p then Just child else Nothing
-                                        Just _ -> acc) Nothing xs

@@ -1,11 +1,9 @@
 module Main where
 
-import System.Directory
 import Data.Tree
-import System.FilePath.Posix
 import Settings
 import Types.Wordpress
-import Control.Exception
+import DirTree
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
 main :: IO()
@@ -21,7 +19,7 @@ testPrint websiteFolder = do
     websiteWithTypes <- mapM findWebsiteVersion websites
     putStrLn $ show websiteWithTypes
 
-findWebsites :: Tree FilePath -> IO [Website]
+findWebsites :: DirTree -> IO [Website]
 findWebsites (Node _ []) = return []
 findWebsites t@(Node _ ps) = do
     wT <- getWebsiteType t
@@ -33,7 +31,7 @@ findWebsites t@(Node _ ps) = do
         _ -> return $ [(Website wT "" t)]
 
 -- todo: Refactor to not use foldl?
-getWebsiteType :: Tree FilePath -> IO WebsiteType
+getWebsiteType :: DirTree -> IO WebsiteType
 getWebsiteType (Node _ []) = return Unknown
 getWebsiteType t =  do
     filters <- evalStateT (getSetting getFilters) Nothing
@@ -72,37 +70,3 @@ findWebsiteVersion w@(Website Wordpress _ td) = do
                                                 Left v -> return $ Website Wordpress v td
                                                 Right v -> return $ Website Wordpress v td
 findWebsiteVersion w@(Website Drupal _ _) = return $ w
-
--- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool?
-treeMatches :: Tree FilePath -> [FilePath] -> Bool
-treeMatches (Node _ []) _ = False
-treeMatches (Node _ ts) m = and $ map (\x -> matchStringAgaints x (map (\(Node p _) -> takeFileName p) ts)) m
-
-filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
-filterDirectoryContents paths filters = let normalFitlered = filter (not . flip matchStringAgaints filters) paths
-                                        in  filter (\x -> not ( '.' == head x)) normalFitlered
-
-getFilteredDirectoryContents :: FilePath -> IO [FilePath]
-getFilteredDirectoryContents filePath = do
-    dirFilter <- evalStateT (getSetting getIgnoreFolders) Nothing
-    result <- try( getDirectoryContents filePath ) :: IO (Either SomeException [FilePath])
-    case result of
-        Left ex -> do
-            putStrLn $ "Exception when trying to read dir: " ++ show ex
-            return $ []
-        Right childs -> return $ filterDirectoryContents childs dirFilter
-
-matchStringAgaints :: String -> [String] -> Bool
-matchStringAgaints strings = or . map (== strings )
-
-buildDirTree :: FilePath -> Int -> IO (Tree FilePath)
-buildDirTree p 0 = return $ Node p []
-buildDirTree p depth = do
-    isDir <- doesDirectoryExist p
-    if isDir then do
-        children <- getFilteredDirectoryContents p
-        let subFolders = map (p </>) children
-        subTrees <- mapM (\x -> buildDirTree x (pred depth)) subFolders
-        return $ Node p subTrees
-    else
-        return $ Node p []
