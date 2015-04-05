@@ -3,6 +3,7 @@ module Main where
 import Data.Tree
 import Settings
 import Types.Wordpress
+import Types.Drupal
 import DirTree
 import Types
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
@@ -68,4 +69,6 @@ findWebsiteVersion :: Website -> IO Website
 findWebsiteVersion w@(Website Wordpress _ td) = do
                                             t <- wpVersion w
                                             return $ Website Wordpress t td
-findWebsiteVersion w@(Website Drupal _ _) = return $ w
+findWebsiteVersion w@(Website Drupal _ td) =  do
+                                            t <- dpVersion w
+                                            return $ Website Drupal t td
