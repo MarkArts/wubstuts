@@ -9,17 +9,16 @@ import Data.Aeson
 type DirTree = Tree FilePath
 
 type Name = String
-type Version = String
 
-data WebsiteVersion = Version String | UnknownVersion
+data Version = Version String | UnknownVersion
     deriving(Show)
 
 data Plugin = Plugin Name Version
     deriving(Show)
 
-data Website = Website WebsiteType WebsiteVersion [Plugin] (DirTree)
+data Website = Website WebsiteType Version [Plugin] (DirTree)
 instance Show Website where
-    show (Website websiteType version plugins (Node path _ )) = show (websiteType, version, plugins, path)
+    show (Website websiteType version plugins (Node path _ )) = show (path, websiteType, version, plugins)
 
 type Conditions = [[FilePath]]
 

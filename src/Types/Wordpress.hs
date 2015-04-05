@@ -11,7 +11,7 @@ versionFileLocation :: [FilePath]
 versionFileLocation = ["wp-includes", "version.php"]
 
 -- todo: add error reporting
-wpVersion :: Website -> IO WebsiteVersion
+wpVersion :: Website -> IO Version
 wpVersion (Website _ _ _ t) = do
     case cd t versionFileLocation of
         Nothing -> return UnknownVersion

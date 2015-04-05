@@ -19,7 +19,8 @@ testPrint websiteFolder = do
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
     websiteWithTypes <- mapM findWebsiteVersion websites
-    putStrLn $ show websiteWithTypes
+    websiteWithPlugins <- mapM findWebsitePlugins websiteWithTypes
+    putStrLn $ show websiteWithPlugins
 
 findWebsites :: DirTree -> IO [Website]
 findWebsites (Node _ []) = return []
@@ -72,3 +73,9 @@ findWebsiteVersion w@(Website Wordpress _ ps td) = do
 findWebsiteVersion w@(Website Drupal _ ps td) =  do
                                             t <- dpVersion w
                                             return $ Website Drupal t ps td
+
+findWebsitePlugins :: Website -> IO Website
+findWebsitePlugins (Website Wordpress n _ td) = return $ Website Wordpress n [] td
+findWebsitePlugins w@(Website Drupal n _ td) =  do
+                                            ps <- dpModules w
+                                            return $ Website Drupal n ps td
