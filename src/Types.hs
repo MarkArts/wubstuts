@@ -14,9 +14,12 @@ type Version = String
 data WebsiteVersion = Version String | UnknownVersion
     deriving(Show)
 
-data Website = Website WebsiteType WebsiteVersion (DirTree)
+data Plugin = Plugin Name Version
+    deriving(Show)
+
+data Website = Website WebsiteType WebsiteVersion [Plugin] (DirTree)
 instance Show Website where
-    show (Website websiteType version (Node path _ )) = show (websiteType, version, path)
+    show (Website websiteType version plugins (Node path _ )) = show (websiteType, version, plugins, path)
 
 type Conditions = [[FilePath]]
 

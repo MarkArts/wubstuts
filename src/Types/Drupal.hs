@@ -12,7 +12,7 @@ versionFileLocation = ["includes", "bootstrap.inc"]
 
 -- todo: add error reporting
 dpVersion :: Website -> IO WebsiteVersion
-dpVersion (Website _ _ t) = do
+dpVersion (Website _ _ _ t) = do
     case cd t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
