@@ -4,28 +4,9 @@ import System.Directory
 import Data.Tree
 import System.FilePath.Posix
 import Settings
+import Types.Wordpress
 import Control.Exception
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
-
-type Name = String
-
-data Website = Website WebsiteType (Tree String)
-instance Show Website where
-    show (Website websiteType (Node path _ )) = show (websiteType, path)
-
-cd :: Tree FilePath -> [FilePath] -> Maybe (Tree FilePath)
-cd (Node _ []) _ = Nothing
-cd t@(Node a _) [p] = getChild t (a </> p)
-cd t@(Node a _) ps = case getChild t ( a </> (head ps) ) of
-                        Just child -> cd child (tail ps)
-                        Nothing -> Nothing
-
-getChild :: (Eq a) => Tree a -> a -> Maybe (Tree a)
-getChild (Node _ []) _ = Nothing
-getChild (Node _ xs) p = foldl (\acc child ->
-                                    case acc of
-                                        Nothing -> if rootLabel child == p then Just child else Nothing
-                                        Just _ -> acc) Nothing xs
 
 main :: IO()
 main = do
@@ -37,7 +18,8 @@ testPrint websiteFolder = do
     depth <- evalStateT (getSetting getSearchDepth) Nothing
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
-    putStrLn $ show websites
+    websiteWithTypes <- mapM findWebsiteVersion websites
+    putStrLn $ show websiteWithTypes
 
 findWebsites :: Tree FilePath -> IO [Website]
 findWebsites (Node _ []) = return []
@@ -48,7 +30,7 @@ findWebsites t@(Node _ ps) = do
             -- todo: refactor to 1 line
             childs <- mapM findWebsites ps
             return $ concat childs
-        _ -> return $ [(Website wT t)]
+        _ -> return $ [(Website wT "" t)]
 
 -- todo: Refactor to not use foldl?
 getWebsiteType :: Tree FilePath -> IO WebsiteType
@@ -63,7 +45,6 @@ getWebsiteType t =  do
                                 Unknown
                 _ -> acc
         ) Unknown filters
-
 
 -- Maybe do something like this instead of the fold
    {- return $ foldUntil
@@ -83,6 +64,14 @@ foldUntil check f val = do
                             next
                         else
                             foldUntil check f (tail val)-}
+
+findWebsiteVersion :: Website -> IO Website
+findWebsiteVersion w@(Website Wordpress _ td) = do
+                                            t <- wpVersion w
+                                            case t of
+                                                Left v -> return $ Website Wordpress v td
+                                                Right v -> return $ Website Wordpress v td
+findWebsiteVersion w@(Website Drupal _ _) = return $ w
 
 -- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool?
 treeMatches :: Tree FilePath -> [FilePath] -> Bool
