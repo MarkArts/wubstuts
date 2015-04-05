@@ -13,6 +13,20 @@ data Website = Website WebsiteType (Tree String)
 instance Show Website where
     show (Website websiteType (Node path _ )) = show (websiteType, path)
 
+cd :: Tree FilePath -> [FilePath] -> Maybe (Tree FilePath)
+cd (Node _ []) _ = Nothing
+cd t@(Node a _) [p] = getChild t (a </> p)
+cd t@(Node a _) ps = case getChild t ( a </> (head ps) ) of
+                        Just child -> cd child (tail ps)
+                        Nothing -> Nothing
+
+getChild :: (Eq a) => Tree a -> a -> Maybe (Tree a)
+getChild (Node _ []) _ = Nothing
+getChild (Node _ xs) p = foldl (\acc child ->
+                                    case acc of
+                                        Nothing -> if rootLabel child == p then Just child else Nothing
+                                        Just _ -> acc) Nothing xs
+
 main :: IO()
 main = do
     targetFolder <- evalStateT (getSetting getWebsitePath) Nothing
