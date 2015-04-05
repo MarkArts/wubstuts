@@ -3,7 +3,7 @@ module Main where
 import System.Directory
 import Data.Tree
 import System.FilePath.Posix
-import qualified Settings as Shit -- Refactor the settings to somthing les syntaxtual anoying
+import Settings -- Refactor the settings to somthing les syntaxtual anoying
 import Control.Exception
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
@@ -13,17 +13,14 @@ data Website = Website WebsiteType (Tree String)
 instance Show Website where
     show (Website websiteType (Node path _ )) = show (websiteType, path)
 
-data WebsiteType = Wordpress | Drupal | Unknown
-    deriving (Show)
-
 main :: IO()
 main = do
-    targetFolder <- evalStateT (Shit.getSetting Shit.website_path) Nothing
+    targetFolder <- evalStateT (getSetting getWebsitePath) Nothing
     testPrint targetFolder
 
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
-    depth <- evalStateT (Shit.getSetting Shit.search_depth) Nothing
+    depth <- evalStateT (getSetting getSearchDepth) Nothing
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
     putStrLn $ show websites
@@ -41,43 +38,32 @@ findWebsites t@(Node _ ps) = do
             return $ concat childs
         _ -> return $ [(Website wT t)]
 
-
---todo: refactor to something less ridiculous
+-- todo: Refactor to not use foldl?
 getWebsiteType :: Tree FilePath -> IO WebsiteType
 getWebsiteType (Node _ []) = return Unknown
 getWebsiteType t =  do
-    wp <- isWordPress t
-    if wp then do
-        return Wordpress
-    else do
-        dp <- isDrupal t
-        if dp then do
-            return Drupal
-        else
-            return Unknown
-
-isWordPress :: Tree FilePath -> IO Bool
-isWordPress t = do
-    wpFitler <- evalStateT (Shit.getSetting Shit.wordpress_site) Nothing
-    return $ or ( map (pathMatches t) wpFitler )
-
-isDrupal :: Tree FilePath -> IO Bool
-isDrupal t = do
-    dpFilter <- evalStateT (Shit.getSetting Shit.drupal_site) Nothing
-    return $ or ( map (pathMatches t) dpFilter )
+    filters <- evalStateT (getSetting getFilters) Nothing
+    return $ foldl (\acc x -> do
+            case acc of
+                Unknown ->  if or ( map (treeMatches t) (getConditions x) )  then
+                                getFilterType x
+                            else
+                                Unknown
+                _ -> acc
+        ) Unknown filters
 
 -- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool
-pathMatches :: Tree FilePath -> [FilePath] -> Bool
-pathMatches (Node _ []) _ = False
-pathMatches (Node _ ts) m = and $ map (\x -> matchStringAgaints x (map (\(Node p _) -> takeFileName p) ts)) m
+treeMatches :: Tree FilePath -> [FilePath] -> Bool
+treeMatches (Node _ []) _ = False
+treeMatches (Node _ ts) m = and $ map (\x -> matchStringAgaints x (map (\(Node p _) -> takeFileName p) ts)) m
 
 filterDirectoryContents :: [FilePath] -> [FilePath] -> [FilePath]
-filterDirectoryContents paths filters = let normalFitlered = filter (not . flip matchStringAgaints filters) paths 
+filterDirectoryContents paths filters = let normalFitlered = filter (not . flip matchStringAgaints filters) paths
                                         in  filter (\x -> not ( '.' == head x)) normalFitlered
 
 getFilteredDirectoryContents :: FilePath -> IO [FilePath]
 getFilteredDirectoryContents filePath = do
-    dirFilter <- evalStateT (Shit.getSetting Shit.ignore_folders) Nothing
+    dirFilter <- evalStateT (getSetting getIgnoreFolders) Nothing
     result <- try( getDirectoryContents filePath ) :: IO (Either SomeException [FilePath])
     case result of
         Left ex -> do
