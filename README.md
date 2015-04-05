@@ -36,7 +36,6 @@ To run the program you first need to build it then execute it
     dist/build/wubstuts/wubstuts
 
 ## TODO
-Refactor the settings
-Make the website types more dynamic (getWebsiteType)
+Place code in the correct sub modules
 Find out the version of a website
 Find out the plugin / modules a website uses
