@@ -23,7 +23,7 @@ wpVersion (Website _ _ t) = do
 
 wpParseVersionFile :: Parsec String () String
 wpParseVersionFile = do
-    manyTill anyChar (string "$wp_version")
+    manyTill anyChar (try $ string "$wp_version")
     manyTill anyChar (char '\'' <|> char '"')
     version <- manyTill anyChar (char '\'' <|> char '"')
     return  version
