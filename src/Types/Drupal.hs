@@ -6,10 +6,11 @@ import Data.Tree
 import DirTree
 import Types
 
-pluginsFolder :: [FilePath]
-pluginsFolder = ["modules"]
 versionFileLocation :: [FilePath]
 versionFileLocation = ["includes", "bootstrap.inc"]
+
+dpPluginsFolders :: Website -> [[FilePath]]
+dpPluginsFolders (Website _ _ _ t) = [map rootLabel (findChilds t ((==) "modules" . takeFileName . rootLabel ) ) ]
 
 -- todo: add error reporting
 dpVersion :: Website -> IO Version
@@ -29,9 +30,10 @@ dpParseVersionFile = do
     version <- manyTill anyChar (char '\'' <|> char '"')
     return  version
 
+-- todo: Map over all dpPluginFolders
 dpModules :: Website -> IO [Plugin]
-dpModules (Website _ _ _ t) = do
-    case cd t pluginsFolder of
+dpModules w@(Website _ _ _ t) = do
+    case cd t (head $ dpPluginsFolders w) of
         Nothing -> return []
         Just (Node _ f) -> mapM (\n@(Node p _) -> do
                                             case getChild n (p </> takeFileName p <.> ".info") of
