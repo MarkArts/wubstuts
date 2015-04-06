@@ -1,6 +1,7 @@
 module Types.Drupal where
 
 import Text.Parsec
+import Text.Parsec.ByteString (parseFromFile)
 import System.FilePath.Posix
 import Data.Tree
 import DirTree
@@ -18,17 +19,17 @@ dpVersion (Website _ _ _ t) = do
     case cd t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
-            versionFile <- readFile (rootLabel f)
-            case parse dpParseVersionFile "??" versionFile of
+            result <- parseFromFile dpParseVersionFile (rootLabel f)
+            case result of
                 Left _ -> return UnknownVersion
                 Right v -> return $ Version v
 
-dpParseVersionFile :: Parsec String () String
 dpParseVersionFile = do
     manyTill anyChar (try $ string "define('VERSION'")
-    manyTill anyChar (char '\'' <|> char '"')
-    version <- manyTill anyChar (char '\'' <|> char '"')
-    return  version
+    char ','
+    version <- between (char '\'') (char '\'') (many1 anyChar)
+    string ");"
+    return version
 
 -- todo: Map over all dpPluginFolders
 dpModules :: Website -> IO [Plugin]
