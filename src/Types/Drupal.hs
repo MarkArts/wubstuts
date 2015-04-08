@@ -4,14 +4,15 @@ import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
 import System.FilePath.Posix
 import Data.Tree
+import System.Directory
 import DirTree
 import Types
 
 versionFileLocation :: [FilePath]
 versionFileLocation = ["includes", "bootstrap.inc"]
 
-dpPluginsFolders :: Website -> [[FilePath]]
-dpPluginsFolders (Website _ _ _ t) = [map rootLabel (findChilds t ((==) "modules" . takeFileName . rootLabel ) ) ]
+dpPluginsFolders :: Website -> [DirTree]
+dpPluginsFolders (Website _ _ _ t) = findChilds t ((==) "modules" . takeFileName . rootLabel )
 
 -- todo: add error reporting
 dpVersion :: Website -> IO Version
@@ -33,26 +34,24 @@ dpParseVersionFile = do
 
 -- todo: Map over all dpPluginFolders
 dpModules :: Website -> IO [Plugin]
-dpModules w@(Website _ _ _ t) = do
-    case cd t (head $ dpPluginsFolders w) of
-        Nothing -> return []
-        Just (Node _ f) -> mapM (\n@(Node p _) -> do
-                                            case getChild n (p </> takeFileName p <.> ".info") of
-                                                Nothing -> return $ Plugin "oops" UnknownVersion
-                                                Just (Node inf _) -> do
-                                                    file <- readFile inf -- .info must be the same as the plugin folder. Maybe write a find .info function
-                                                    return $ dpParseModuleInfo file
-                                        ) f
+dpModules w = mapM (\p -> dpParseModuleInfo (p </> takeFileName p <.> ".info")) (concat $ map dpFindModulesIn (dpPluginsFolders w))
 
--- this only finds the standard drupal modules not the actual included ones
-dpParseModuleInfo :: String -> Plugin
-dpParseModuleInfo s = do
-                        let name = parse dpFindModuleName "??" s
-                        case name of
-                            Left e -> Plugin (show e) UnknownVersion
-                            Right n -> Plugin n UnknownVersion
+dpFindModulesIn :: DirTree -> [FilePath]
+dpFindModulesIn t = [ rootLabel f | f@(Node _ (_:_)) <- subForest t]
 
-dpFindModuleName :: Parsec String () String
+--todo: Maybe we should write our own doesFileExist using the dirTree
+dpParseModuleInfo :: FilePath -> IO Plugin
+dpParseModuleInfo p = do
+                        fileExist <- doesFileExist p
+                        case fileExist of
+                            False -> return $ Plugin ("No .info file found for " ++ p) UnknownVersion
+                            True -> do
+                                name <- parseFromFile dpFindModuleName p
+                                case name of
+                                    Left e -> return $ Plugin (show e) UnknownVersion
+                                    Right n -> return $ Plugin n UnknownVersion
+
+
 dpFindModuleName = do
     manyTill anyChar (try $ string "name")
     manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
