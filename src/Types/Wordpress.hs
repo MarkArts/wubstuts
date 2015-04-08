@@ -1,12 +1,14 @@
 module Types.Wordpress where
 
 import Text.Parsec
+import Text.Parsec.ByteString (parseFromFile)
 import Data.Tree
 import DirTree
 import Types
 
 pluginsFolder :: [FilePath]
 pluginsFolder = ["wp-content", "plugins"]
+
 versionFileLocation :: [FilePath]
 versionFileLocation = ["wp-includes", "version.php"]
 
@@ -16,21 +18,16 @@ wpVersion (Website _ _ _ t) = do
     case cd t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
-            versionFile <- readFile (rootLabel f)
-            case parse wpParseVersionFile "??" versionFile of
+            result <- parseFromFile wpParseVersionFile (rootLabel f)
+            case result of
                 Left _ -> return UnknownVersion
                 Right v -> return $ Version v
 
-wpParseVersionFile :: Parsec String () String
 wpParseVersionFile = do
-    manyTill anyChar (try $ string "$wp_version")
-    manyTill anyChar (char '\'' <|> char '"')
-    version <- manyTill anyChar (char '\'' <|> char '"')
-    return  version
-
-{-wpParseVersion :: Parser String
-wpParseVersion = do
-    string "$wp_version"-}
+    manyTill anyChar (try $ string "$wp_version") -- Find $wp_version
+    space >> char '=' >> space -- Match the equals sign after $wp_version
+    version <- between (char '\'' ) (char '\'') (many anyChar) -- Parse the version between two apostrophes
+    return version
 
 
 
@@ -46,17 +43,4 @@ wpParseVersion = do
 
     Plugin Name: WordPress SEO
     Version: 1.7.4
--}
-
-{-
-
-    consume until "$wp_version"
-    maybe consume space
-    maybe consume =
-    maybe consume space
-    consume ' or ""
-    read until ' or ""
-
-    $wp_version = '4.1.1';
-
 -}
