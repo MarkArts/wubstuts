@@ -16,7 +16,12 @@ data Version = Version String | UnknownVersion
 data Plugin = Plugin Name Version
     deriving(Show)
 
-data Website = Website WebsiteType Version [Plugin] (DirTree)
+data Website = Website {
+    getWebsiteType :: WebsiteType,
+    getVersion :: Version,
+    getPlugins :: [Plugin],
+    getDirTree :: DirTree
+}
 instance Show Website where
     show (Website websiteType version plugins (Node path _ )) = show (path, websiteType, version, plugins)
 

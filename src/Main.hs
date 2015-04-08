@@ -5,6 +5,7 @@ import Settings
 import Types.Wordpress
 import Types.Drupal
 import DirTree
+import Control.Applicative
 import Types
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
@@ -18,14 +19,18 @@ testPrint websiteFolder = do
     depth <- evalStateT (getSetting getSearchDepth) Nothing
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
-    websiteWithTypes <- mapM findWebsiteVersion websites
+    websiteExpanded <- mapM (flip expandWebsiteDirTree 4) websites
+    websiteWithTypes <- mapM findWebsiteVersion websiteExpanded
     websiteWithPlugins <- mapM findWebsitePlugins websiteWithTypes
     putStrLn $ show websiteWithPlugins
+
+expandWebsiteDirTree :: Website -> Int -> IO Website
+expandWebsiteDirTree (Website a b c xs) d = Website a b c <$> expandDirTree xs d
 
 findWebsites :: DirTree -> IO [Website]
 findWebsites (Node _ []) = return []
 findWebsites t@(Node _ ps) = do
-    wT <- getWebsiteType t
+    wT <- findWebsiteType t
     case wT of
         UnknownType -> do
             -- todo: refactor to 1 line
@@ -34,9 +39,10 @@ findWebsites t@(Node _ ps) = do
         _ -> return $ [(Website wT UnknownVersion [] t)]
 
 -- todo: Refactor to not use foldl?
-getWebsiteType :: DirTree -> IO WebsiteType
-getWebsiteType (Node _ []) = return UnknownType
-getWebsiteType t =  do
+-- todo: should this function except a webiste instead?
+findWebsiteType :: DirTree -> IO WebsiteType
+findWebsiteType (Node _ []) = return UnknownType
+findWebsiteType t =  do
     filters <- evalStateT (getSetting getFilters) Nothing
     return $ foldl (\acc x -> do
             case acc of

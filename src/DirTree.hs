@@ -46,6 +46,13 @@ buildDirTree p depth = do
     else
         return $ Node p []
 
+expandDirTree :: DirTree -> Int-> IO DirTree
+expandDirTree t 0 = return t
+expandDirTree (Node p []) d = buildDirTree p d
+expandDirTree (Node x xs) d = do
+                                childs <- mapM (flip expandDirTree d) xs
+                                return $ Node x childs
+
 -- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool?
 treeMatches :: DirTree -> [FilePath] -> Bool
 treeMatches (Node _ []) _ = False
