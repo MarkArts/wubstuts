@@ -32,10 +32,7 @@ findWebsites (Node _ []) = return []
 findWebsites t@(Node _ ps) = do
     wT <- findWebsiteType t
     case wT of
-        UnknownType -> do
-            -- todo: refactor to 1 line
-            childs <- mapM findWebsites ps
-            return $ concat childs
+        UnknownType -> mapM findWebsites ps >>= return . concat
         _ -> return $ [(Website wT UnknownVersion [] t)]
 
 -- todo: Refactor to not use foldl?
