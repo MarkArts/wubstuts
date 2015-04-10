@@ -47,7 +47,7 @@ parseSettings :: IO Settings
 parseSettings = do
     settingsContent <- B.readFile settingsFile
     case eitherDecode settingsContent of
-        Left x -> error $ show x
+        Left x  -> error $ show x
         Right s -> return s
 
 -- Put the Settings into the SettingsT state monad
