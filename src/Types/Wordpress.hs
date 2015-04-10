@@ -14,7 +14,7 @@ versionFileLocation = ["wp-includes", "version.php"]
 
 -- todo: add error reporting
 wpVersion :: Website -> IO Version
-wpVersion (Website _ _ _ t) = do
+wpVersion (Website Wordpress _ _ t) = do
     case cd t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
@@ -22,6 +22,7 @@ wpVersion (Website _ _ _ t) = do
             case result of
                 Left e -> error $ show e
                 Right v -> return $ Version v
+wpVersion _ = error "Can't lookup Wordpress version for a non Wordpress website"
 
 wpParseVersionFile = do
     manyTill anyChar . try $ versionVar

@@ -16,7 +16,7 @@ dpPluginsFolders (Website _ _ _ t) = findChilds t ((==) "modules" . takeFileName
 
 -- todo: add error reporting
 dpVersion :: Website -> IO Version
-dpVersion (Website _ _ _ t) = do
+dpVersion (Website Drupal _ _ t) = do
     case cd t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
@@ -24,6 +24,7 @@ dpVersion (Website _ _ _ t) = do
             case result of
                 Left _ -> return UnknownVersion
                 Right v -> return $ Version v
+dpVersion _ = error "Can't lookup Drupal version for a non Drupal website"
 
 dpParseVersionFile = do
     manyTill anyChar (try $ string "define('VERSION'")
