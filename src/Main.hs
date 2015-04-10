@@ -70,15 +70,25 @@ foldUntil check f val = do
                             foldUntil check f (tail val)-}
 
 findWebsiteVersion :: Website -> IO Website
-findWebsiteVersion w@(Website Wordpress _ ps td) = do
-                                            t <- wpVersion w
-                                            return $ Website Wordpress t ps td
-findWebsiteVersion w@(Website Drupal _ ps td) =  do
-                                            t <- dpVersion w
-                                            return $ Website Drupal t ps td
+findWebsiteVersion w = appVersion w >>= return . setWebsiteVersion w
 
 findWebsitePlugins :: Website -> IO Website
-findWebsitePlugins (Website Wordpress n _ td) = return $ Website Wordpress n [] td
-findWebsitePlugins w@(Website Drupal n _ td) =  do
-                                            ps <- dpModules w
-                                            return $ Website Drupal n ps td
+findWebsitePlugins w = appPlugins w >>= return . setWebsitePlugins w
+
+setWebsiteVersion :: Website -> Version -> Website
+setWebsiteVersion w version = w { getVersion = version }
+
+setWebsitePlugins :: Website -> [Plugin] -> Website
+setWebsitePlugins w plugins = w { getPlugins = plugins }
+
+-- TODO; (Mats Rietdijk) this should be made into an instance
+appVersion w = case getWebsiteType w of
+    Wordpress -> wpVersion w
+    Drupal    -> dpVersion w
+    _         -> return UnknownVersion
+
+-- TODO; (Mats Rietdijk) this should be made into an instance
+appPlugins w = case getWebsiteType w of
+    Wordpress -> return []
+    Drupal    -> dpModules w
+    _         -> return []
