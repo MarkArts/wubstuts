@@ -1,6 +1,6 @@
 {
     "website_path" : "/home",
-    "search_depth" : 6,
+    "search_depth" : 3,
     "ignore_folders" : [".", "..", "releases", "builds", ".git", ".svn", ".node_modules", ".cabal-sandbox"],
     "filters" : [
         {

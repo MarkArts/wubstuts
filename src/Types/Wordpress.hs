@@ -20,27 +20,15 @@ wpVersion (Website _ _ _ t) = do
         Just f -> do
             result <- parseFromFile wpParseVersionFile (rootLabel f)
             case result of
-                Left _ -> return UnknownVersion
+                Left e -> error $ show e
                 Right v -> return $ Version v
 
 wpParseVersionFile = do
-    manyTill anyChar (try $ string "$wp_version") -- Find $wp_version
-    space >> char '=' >> space -- Match the equals sign after $wp_version
-    version <- between (char '\'' ) (char '\'') (many anyChar) -- Parse the version between two apostrophes
-    return version
-
-
-
-{-
-
-    consume until "Plugin Name:"
-    Consume until letter
-    read until next line
-
-    consume until "Version: "
-    consume until char
-    read until line break
-
-    Plugin Name: WordPress SEO
-    Version: 1.7.4
--}
+    manyTill anyChar . try $ versionVar
+    spaces >> char '=' >> spaces
+    anyQuote
+    manyTillAnyQuote >>= return
+  where
+    versionVar = endOfLine >> spaces >> string "$wp_version"
+    anyQuote = char '\'' <|> char '"'
+    manyTillAnyQuote = manyTill anyChar anyQuote
