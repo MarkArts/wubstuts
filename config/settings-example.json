@@ -1,18 +1,19 @@
 {
-    "website_path" : "/home",
+    "website_path" : "/home/mark/projects",
     "search_depth" : 3,
+    "additional_depth" : 4,
     "ignore_folders" : [".", "..", "releases", "builds", ".git", ".svn", ".node_modules", ".cabal-sandbox"],
     "filters" : [
         {
             "type" : "wordpress",
             "conditions" : [
-                ["wp-config.php"]
+                ["wp-settings.php", "wp-contents"]
             ]
         },
         {
             "type" : "drupal",
             "conditions" : [
-                ["themes", "modules"]
+                ["themes", "modules", "includes"]
             ]
         }
     ]

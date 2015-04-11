@@ -17,9 +17,10 @@ main = do
 testPrint :: String -> IO ()
 testPrint websiteFolder = do
     depth <- evalStateT (getSetting getSearchDepth) Nothing
+    additionalDepth <- evalStateT (getSetting getAdditionalDepth) Nothing
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
-    websiteExpanded <- mapM (flip expandWebsiteDirTree 4) websites
+    websiteExpanded <- mapM (flip expandWebsiteDirTree additionalDepth) websites
     websiteWithTypes <- mapM findWebsiteVersion websiteExpanded
     websiteWithPlugins <- mapM findWebsitePlugins websiteWithTypes
     putStrLn $ show websiteWithPlugins

@@ -18,10 +18,11 @@ data WebsiteFilter = WebsiteFilter {
     } deriving (Show)
 
 data Settings = Settings {
-    getWebsitePath   :: FilePath,
-    getSearchDepth   :: Int,
-    getIgnoreFolders :: [FilePath],
-    getFilters       :: [WebsiteFilter]
+    getWebsitePath      :: FilePath,
+    getSearchDepth      :: Int,
+    getAdditionalDepth  :: Int,
+    getIgnoreFolders    :: [FilePath],
+    getFilters          :: [WebsiteFilter]
     } deriving (Show)
 
 -- A stateful Settings monad to avoid parsing the
@@ -30,10 +31,11 @@ type SettingsT = StateT (Maybe Settings) IO
 
 instance FromJSON Settings where
     parseJSON (Object v) = do
-        Settings                    <$>
-            (v .: "website_path")   <*>
-            (v .: "search_depth")   <*>
-            (v .: "ignore_folders") <*>
+        Settings                        <$>
+            (v .: "website_path")       <*>
+            (v .: "additional_depth")   <*>
+            (v .: "search_depth")       <*>
+            (v .: "ignore_folders")     <*>
             (v .: "filters")
 
 instance FromJSON WebsiteFilter where

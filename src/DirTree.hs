@@ -5,6 +5,7 @@ import System.FilePath.Posix
 import System.Directory
 import Control.Monad.State
 import Settings
+import Control.Applicative
 import Types
 import Control.Exception
 
@@ -49,9 +50,7 @@ buildDirTree p depth = do
 expandDirTree :: DirTree -> Int-> IO DirTree
 expandDirTree t 0 = return t
 expandDirTree (Node p []) d = buildDirTree p d
-expandDirTree (Node x xs) d = do
-                                childs <- mapM (flip expandDirTree d) xs
-                                return $ Node x childs
+expandDirTree (Node x xs) d = Node x <$> mapM (flip expandDirTree d) xs
 
 -- todo: rewrite to matches :: [FilePath] -> [FilePath] -> Bool?
 treeMatches :: DirTree -> [FilePath] -> Bool
