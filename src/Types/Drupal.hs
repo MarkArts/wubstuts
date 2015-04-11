@@ -13,7 +13,7 @@ versionFileLocation :: [FilePath]
 versionFileLocation = ["includes", "bootstrap.inc"]
 
 dpModuleFolders :: Website -> [DirTree]
-dpModuleFolders (Website _ _ _ t) = findTopChilds t ((==) "modules" . takeFileName . rootLabel )
+dpModuleFolders (Website _ _ _ t) = findChilds t ((==) "modules" . takeFileName . rootLabel )
 
 
 dpVersion :: Website -> IO Version
@@ -42,7 +42,7 @@ dpFindModuleInfo p = do
                             True -> do
                                 plugin <- parseFromFile dpParseModuleInfo p
                                 case plugin of
-                                    Left e -> error $ show e
+                                    Left e -> return $ Plugin (show e) UnknownVersion
                                     Right n -> return n
 
 dpParseVersionFile :: Parsec ByteString () String
@@ -53,24 +53,25 @@ dpParseVersionFile = do
     string ");"
     return version
 
+-- we use lookAhead because we are not sure of the order the information apears in
 dpParseModuleInfo :: Parsec ByteString () Plugin
 dpParseModuleInfo = do
-    n <- dpParseModuleName
-    v <- dpParseModuleVersion
+    n <- lookAhead dpParseModuleName
+    v <- lookAhead dpParseModuleVersion
     return $ Plugin n (Version v)
 
 dpParseModuleName :: Parsec ByteString () String
 dpParseModuleName = do
     manyTill anyChar (try $ string "name")
     manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
-    name <- manyTill anyChar (char '\n')
+    name <- manyTill anyChar endOfLine
     return name
 
 dpParseModuleVersion :: Parsec ByteString () String
 dpParseModuleVersion = do
     manyTill anyChar (try $ string "version")
     manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
-    name <- manyTill anyChar (char '\n')
+    name <- manyTill anyChar endOfLine
     return name
 
 {-
