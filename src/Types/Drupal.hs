@@ -53,6 +53,7 @@ dpParseVersionFile = do
     string ");"
     return version
 
+-- todo: The dpParseModuleInfo function should catch the name or version not found error not th dpFindModuleInfo
 -- we use lookAhead because we are not sure of the order the information apears in
 dpParseModuleInfo :: Parsec ByteString () Plugin
 dpParseModuleInfo = do
