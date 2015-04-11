@@ -83,12 +83,14 @@ setWebsitePlugins :: Website -> [Plugin] -> Website
 setWebsitePlugins w plugins = w { getPlugins = plugins }
 
 -- TODO; (Mats Rietdijk) this should be made into an instance
+appVersion :: Website -> IO Version
 appVersion w = case getWebsiteType w of
     Wordpress -> wpVersion w
     Drupal    -> dpVersion w
     _         -> return UnknownVersion
 
 -- TODO; (Mats Rietdijk) this should be made into an instance
+appPlugins :: Website -> IO [Plugin]
 appPlugins w = case getWebsiteType w of
     Wordpress -> return []
     Drupal    -> dpModules w

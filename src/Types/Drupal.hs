@@ -4,6 +4,7 @@ import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
 import System.FilePath.Posix
 import Data.Tree
+import Data.ByteString (ByteString)
 import System.Directory
 import DirTree
 import Types
@@ -12,7 +13,7 @@ versionFileLocation :: [FilePath]
 versionFileLocation = ["includes", "bootstrap.inc"]
 
 dpPluginsFolders :: Website -> [DirTree]
-dpPluginsFolders (Website _ _ _ t) = findChilds t ((==) "modules" . takeFileName . rootLabel )
+dpPluginsFolders (Website _ _ _ t) = findTopChilds t ((==) "modules" . takeFileName . rootLabel )
 
 -- todo: add error reporting
 dpVersion :: Website -> IO Version
@@ -26,6 +27,7 @@ dpVersion (Website Drupal _ _ t) = do
                 Right v -> return $ Version v
 dpVersion _ = error "Can't lookup Drupal version for a non Drupal website"
 
+dpParseVersionFile :: Parsec ByteString () String
 dpParseVersionFile = do
     manyTill anyChar (try $ string "define('VERSION'")
     char ','
@@ -52,8 +54,16 @@ dpParseModuleInfo p = do
                                     Right n -> return $ Plugin n UnknownVersion
 
 
+dpFindModuleName :: Parsec ByteString () String
 dpFindModuleName = do
     manyTill anyChar (try $ string "name")
+    manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
+    name <- manyTill anyChar (char '\n')
+    return name
+
+dpFindModuleVersion :: Parsec ByteString () String
+dpFindModuleVersion = do
+    manyTill anyChar (try $ string "version")
     manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
     name <- manyTill anyChar (char '\n')
     return name

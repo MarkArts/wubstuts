@@ -3,6 +3,7 @@ module Types.Wordpress where
 import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
 import Data.Tree
+import Data.ByteString (ByteString)
 import DirTree
 import Types
 
@@ -24,6 +25,7 @@ wpVersion (Website Wordpress _ _ t) = do
                 Right v -> return $ Version v
 wpVersion _ = error "Can't lookup Wordpress version for a non Wordpress website"
 
+wpParseVersionFile :: Parsec ByteString () String
 wpParseVersionFile = do
     manyTill anyChar . try $ versionVar
     spaces >> char '=' >> spaces
