@@ -37,33 +37,38 @@ dpParseVersionFile = do
 
 -- todo: Map over all dpPluginFolders
 dpModules :: Website -> IO [Plugin]
-dpModules w = mapM dpParseModuleInfo $ map rootLabel $ concat $ map (flip findTopChilds infos) $ dpModuleFolders w
+dpModules w = mapM dpFindModuleInfo $ map rootLabel $ concat $ map (flip findTopChilds infos) $ dpModuleFolders w
                               where infos (Node n _) = takeExtension n == ".info"
 
 dpFindModulesIn :: DirTree -> [FilePath]
 dpFindModulesIn t = [ rootLabel f | f@(Node _ (_:_)) <- subForest t]
 
-dpParseModuleInfo :: FilePath -> IO Plugin
-dpParseModuleInfo p = do
+dpFindModuleInfo :: FilePath -> IO Plugin
+dpFindModuleInfo p = do
                         fileExist <- doesFileExist p
                         case fileExist of
                             False -> return $ Plugin ("No .info file found for " ++ p) UnknownVersion
                             True -> do
-                                name <- parseFromFile dpFindModuleName p
-                                case name of
-                                    Left e -> return $ Plugin (show e) UnknownVersion
-                                    Right n -> return $ Plugin n UnknownVersion
+                                plugin <- parseFromFile dpParseModuleInfo p
+                                case plugin of
+                                    Left e -> error $ show e
+                                    Right n -> return n
 
+dpParseModuleInfo :: Parsec ByteString () Plugin
+dpParseModuleInfo = do
+    n <- dpParseModuleName
+    v <- dpParseModuleVersion
+    return $ Plugin n (Version v)
 
-dpFindModuleName :: Parsec ByteString () String
-dpFindModuleName = do
+dpParseModuleName :: Parsec ByteString () String
+dpParseModuleName = do
     manyTill anyChar (try $ string "name")
     manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
     name <- manyTill anyChar (char '\n')
     return name
 
-dpFindModuleVersion :: Parsec ByteString () String
-dpFindModuleVersion = do
+dpParseModuleVersion :: Parsec ByteString () String
+dpParseModuleVersion = do
     manyTill anyChar (try $ string "version")
     manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
     name <- manyTill anyChar (char '\n')
