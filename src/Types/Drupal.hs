@@ -4,6 +4,7 @@ import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
 import System.FilePath.Posix
 import Data.Tree
+import Data.Maybe (fromMaybe)
 import Data.ByteString (ByteString)
 import System.Directory
 import DirTree
@@ -53,31 +54,29 @@ dpParseVersionFile = do
     string ");"
     return version
 
--- todo: The dpParseModuleInfo function should catch the name or version not found error not th dpFindModuleInfo
--- we use lookAhead because we are not sure of the order the information apears in
+-- we use lookAhead because the version and name may not be in that order
 dpParseModuleInfo :: Parsec ByteString () Plugin
 dpParseModuleInfo = do
     n <- lookAhead dpParseModuleName
-    v <- lookAhead dpParseModuleVersion
-    return $ Plugin n (Version v)
+    version <- lookAhead dpParseModuleVersion
+    case version of
+        Just v -> return $ Plugin n (Version v)
+        Nothing -> return $ Plugin n UnknownVersion
 
 dpParseModuleName :: Parsec ByteString () String
-dpParseModuleName = do
-    manyTill anyChar (try $ string "name")
-    manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
-    name <- manyTill anyChar endOfLine
-    return name
+dpParseModuleName = dpInfoVariable "name"
 
-dpParseModuleVersion :: Parsec ByteString () String
-dpParseModuleVersion = do
-    manyTill anyChar (try $ string "version")
-    manyTill anyChar (lookAhead $ oneOf (['a'..'z'] ++ ['A'..'Z']) )
-    name <- manyTill anyChar endOfLine
-    return name
+dpParseModuleVersion :: Parsec ByteString () (Maybe String)
+dpParseModuleVersion = optionMaybe (try $ dpInfoVariable "version")
 
-{-
-    /**
-        * The current system version.
-    */
-    define('VERSION', '7.34');
--}
+dpInfoVariable :: String -> Parsec ByteString () String
+dpInfoVariable v = do
+    manyTill anyChar (try $ varDecleration)
+    spaces >> char '=' >> spaces
+    var <- between stringLike stringLike contents
+    endOfLine
+    return var
+  where
+    varDecleration = string v >> (space <|> char '=')
+    stringLike = optional (char '\'' <|> char '"')
+    contents = many1 $ noneOf ['"', '\'', '\r', '\n']
