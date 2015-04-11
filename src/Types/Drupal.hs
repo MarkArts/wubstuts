@@ -15,7 +15,7 @@ versionFileLocation = ["includes", "bootstrap.inc"]
 dpModuleFolders :: Website -> [DirTree]
 dpModuleFolders (Website _ _ _ t) = findTopChilds t ((==) "modules" . takeFileName . rootLabel )
 
--- todo: add error reporting
+
 dpVersion :: Website -> IO Version
 dpVersion (Website Drupal _ _ t) = do
     case traverse t versionFileLocation of
@@ -27,15 +27,6 @@ dpVersion (Website Drupal _ _ t) = do
                 Right v -> return $ Version v
 dpVersion _ = error "Can't lookup Drupal version for a non Drupal website"
 
-dpParseVersionFile :: Parsec ByteString () String
-dpParseVersionFile = do
-    manyTill anyChar (try $ string "define('VERSION'")
-    char ','
-    version <- between (char '\'') (char '\'') (many1 anyChar)
-    string ");"
-    return version
-
--- todo: Map over all dpPluginFolders
 dpModules :: Website -> IO [Plugin]
 dpModules w = mapM dpFindModuleInfo $ map rootLabel $ concat $ map (flip findTopChilds infos) $ dpModuleFolders w
                               where infos (Node n _) = takeExtension n == ".info"
@@ -53,6 +44,14 @@ dpFindModuleInfo p = do
                                 case plugin of
                                     Left e -> error $ show e
                                     Right n -> return n
+
+dpParseVersionFile :: Parsec ByteString () String
+dpParseVersionFile = do
+    manyTill anyChar (try $ string "define('VERSION'")
+    char ','
+    version <- between (char '\'') (char '\'') (many1 anyChar)
+    string ");"
+    return version
 
 dpParseModuleInfo :: Parsec ByteString () Plugin
 dpParseModuleInfo = do
