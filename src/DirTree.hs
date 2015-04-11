@@ -28,12 +28,15 @@ getChildFile (Node _ []) _ = Nothing
 getChildFile t@(Node n _) p = getChild t (n </> p)
 
 findChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
-findChilds (Node _ []) _ = []
-findChilds (Node _ xs) f = do
-                            foldl (\acc child -> case f child of
-                                                    True -> acc ++ [child] ++ (findChilds child f)
-                                                    False -> acc ++ (findChilds child f)
-                                                    ) [] xs
+findChilds n@(Node _ xs) f
+                | f n = n : childs
+                | otherwise = childs
+                where childs = concat $ map (flip findChilds f) xs
+
+findTopChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
+findTopChilds n@(Node _ xs) f
+                | f n = [n]
+                | otherwise = concat $ map (flip findTopChilds f) xs
 
 buildDirTree :: FilePath -> Int -> IO (DirTree)
 buildDirTree p 0 = return $ Node p []

@@ -40,7 +40,6 @@ dpModules w = mapM (\p -> dpParseModuleInfo (p </> takeFileName p <.> ".info")) 
 dpFindModulesIn :: DirTree -> [FilePath]
 dpFindModulesIn t = [ rootLabel f | f@(Node _ (_:_)) <- subForest t]
 
---todo: Maybe we should write our own doesFileExist using the dirTree
 dpParseModuleInfo :: FilePath -> IO Plugin
 dpParseModuleInfo p = do
                         fileExist <- doesFileExist p
