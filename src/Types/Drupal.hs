@@ -17,7 +17,7 @@ dpPluginsFolders (Website _ _ _ t) = findChilds t ((==) "modules" . takeFileName
 -- todo: add error reporting
 dpVersion :: Website -> IO Version
 dpVersion (Website Drupal _ _ t) = do
-    case cd t versionFileLocation of
+    case traverse t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
             result <- parseFromFile dpParseVersionFile (rootLabel f)

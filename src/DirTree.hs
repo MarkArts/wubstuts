@@ -9,11 +9,11 @@ import Control.Applicative
 import Types
 import Control.Exception
 
-cd :: DirTree -> [FilePath] -> Maybe (DirTree)
-cd (Node _ []) _ = Nothing
-cd t@(Node a _) [p] = getChild t (a </> p)
-cd t@(Node a _) ps = case getChild t ( a </> (head ps) ) of
-                        Just child -> cd child (tail ps)
+traverse :: DirTree -> [FilePath] -> Maybe (DirTree)
+traverse (Node _ []) _ = Nothing
+traverse t@(Node a _) [p] = getChild t (a </> p)
+traverse t@(Node a _) ps = case getChild t ( a </> (head ps) ) of
+                        Just child -> traverse child (tail ps)
                         Nothing -> Nothing
 
 getChild :: (Eq a) => Tree a -> a -> Maybe (Tree a)

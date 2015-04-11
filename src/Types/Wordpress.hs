@@ -15,7 +15,7 @@ versionFileLocation = ["wp-includes", "version.php"]
 -- todo: add error reporting
 wpVersion :: Website -> IO Version
 wpVersion (Website Wordpress _ _ t) = do
-    case cd t versionFileLocation of
+    case traverse t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
             result <- parseFromFile wpParseVersionFile (rootLabel f)
