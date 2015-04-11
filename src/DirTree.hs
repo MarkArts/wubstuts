@@ -11,21 +11,21 @@ import Control.Exception
 
 traverse :: DirTree -> [FilePath] -> Maybe (DirTree)
 traverse (Node _ []) _ = Nothing
-traverse t@(Node a _) [p] = getChild t (a </> p)
-traverse t@(Node a _) ps = case getChild t ( a </> (head ps) ) of
+traverse t@(Node a _) [p] = getChild t ((==) (a </> p) . rootLabel)
+traverse t@(Node a _) ps = case getChild t ((==) (a </> (head ps) ) . rootLabel) of
                         Just child -> traverse child (tail ps)
                         Nothing -> Nothing
 
-getChild :: (Eq a) => Tree a -> a -> Maybe (Tree a)
+getChild :: (Eq a) => Tree a -> (Tree a -> Bool) -> Maybe (Tree a)
 getChild (Node _ []) _ = Nothing
-getChild (Node _ xs) p = foldl (\acc child ->
+getChild (Node _ xs) f = foldl (\acc child ->
                                     case acc of
-                                        Nothing -> if rootLabel child == p then Just child else Nothing
+                                        Nothing -> if f child then Just child else Nothing
                                         Just _ -> acc) Nothing xs
 
 getChildFile :: Tree FilePath -> FilePath -> Maybe (Tree FilePath)
 getChildFile (Node _ []) _ = Nothing
-getChildFile t@(Node n _) p = getChild t (n </> p)
+getChildFile t@(Node n _) p = getChild t ((==) (n </> p) . rootLabel)
 
 findChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
 findChilds n@(Node _ xs) f
@@ -34,9 +34,9 @@ findChilds n@(Node _ xs) f
                 where childs = concat $ map (flip findChilds f) xs
 
 findTopChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
-findTopChilds n@(Node _ xs) f
-                | f n = [n]
-                | otherwise = concat $ map (flip findTopChilds f) xs
+findTopChilds n@(Node _ xs) f = case getChild n f of
+                                    Just t -> [t]
+                                    Nothing ->  concat $ map (flip findTopChilds f) xs
 
 buildDirTree :: FilePath -> Int -> IO (DirTree)
 buildDirTree p 0 = return $ Node p []

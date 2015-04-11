@@ -12,8 +12,8 @@ import Types
 versionFileLocation :: [FilePath]
 versionFileLocation = ["includes", "bootstrap.inc"]
 
-dpPluginsFolders :: Website -> [DirTree]
-dpPluginsFolders (Website _ _ _ t) = findTopChilds t ((==) "modules" . takeFileName . rootLabel )
+dpModuleFolders :: Website -> [DirTree]
+dpModuleFolders (Website _ _ _ t) = findTopChilds t ((==) "modules" . takeFileName . rootLabel )
 
 -- todo: add error reporting
 dpVersion :: Website -> IO Version
@@ -37,7 +37,8 @@ dpParseVersionFile = do
 
 -- todo: Map over all dpPluginFolders
 dpModules :: Website -> IO [Plugin]
-dpModules w = mapM (\p -> dpParseModuleInfo (p </> takeFileName p <.> ".info")) (concat $ map dpFindModulesIn (dpPluginsFolders w))
+dpModules w = mapM dpParseModuleInfo $ map rootLabel $ concat $ map (flip findTopChilds infos) $ dpModuleFolders w
+                              where infos (Node n _) = takeExtension n == ".info"
 
 dpFindModulesIn :: DirTree -> [FilePath]
 dpFindModulesIn t = [ rootLabel f | f@(Node _ (_:_)) <- subForest t]
