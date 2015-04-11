@@ -4,7 +4,6 @@ import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
 import System.FilePath.Posix
 import Data.Tree
-import Data.Maybe (fromMaybe)
 import Data.ByteString (ByteString)
 import System.Directory
 import DirTree
