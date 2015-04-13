@@ -18,10 +18,13 @@ traverse t@(Node a _) ps = case getChild t ((==) (a </> (head ps) ) . rootLabel)
 
 getChild :: (Eq a) => Tree a -> (Tree a -> Bool) -> Maybe (Tree a)
 getChild (Node _ []) _ = Nothing
-getChild (Node _ xs) f = foldl (\acc child ->
-                                    case acc of
-                                        Nothing -> if f child then Just child else Nothing
-                                        Just _ -> acc) Nothing xs
+getChild n f = case getChilds n f of
+                            [] -> Nothing
+                            (x:_) -> Just x
+
+getChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
+getChilds (Node _ []) _ = []
+getChilds (Node _ xs) f = filter f xs
 
 getChildFile :: Tree FilePath -> FilePath -> Maybe (Tree FilePath)
 getChildFile (Node _ []) _ = Nothing
