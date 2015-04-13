@@ -1,6 +1,7 @@
 module Main where
 
 import Data.Tree
+import Data.Aeson
 import Settings
 import Types.Wordpress
 import Types.Drupal
@@ -23,7 +24,7 @@ testPrint websiteFolder = do
     websiteExpanded <- mapM (flip expandWebsiteDirTree additionalDepth) websites
     websiteWithTypes <- mapM findWebsiteVersion websiteExpanded
     websiteWithPlugins <- mapM findWebsitePlugins websiteWithTypes
-    putStrLn $ show websiteWithPlugins
+    putStrLn $ show $ encode websiteWithPlugins
 
 expandWebsiteDirTree :: Website -> Int -> IO Website
 expandWebsiteDirTree (Website a b c xs) d = Website a b c <$> expandDirTree xs d

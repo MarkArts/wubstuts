@@ -11,10 +11,15 @@ type DirTree = Tree FilePath
 type Name = String
 
 data Version = Version String | UnknownVersion
-    deriving(Show)
+instance Show Version where
+  show (UnknownVersion) = "UnknownVersion"
+  show (Version a) = a
 
 data Plugin = Plugin Name Version
     deriving(Show)
+
+instance ToJSON Plugin where
+  toJSON (Plugin n v) = object ["name" .= n, "version" .= (show v)]
 
 data Website = Website {
     getWebsiteType :: WebsiteType,
@@ -24,6 +29,10 @@ data Website = Website {
 }
 instance Show Website where
     show (Website websiteType version plugins (Node path _ )) = show (path, websiteType, version, plugins)
+
+instance ToJSON Website where
+  toJSON (Website t v ps td) = object ["path" .= rootLabel td, "type" .= show t, "version" .= show v, "plugins" .= ps]
+
 
 type Conditions = [[FilePath]]
 
