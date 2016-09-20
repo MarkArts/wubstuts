@@ -2,12 +2,14 @@ module Main where
 
 import Data.Tree
 import Data.Aeson
+import Data.Aeson.Encode.Pretty
 import Settings
 import Types.Wordpress
 import Types.Drupal
 import DirTree
 import Control.Applicative
 import Types
+import qualified Data.ByteString.Lazy as B
 import Control.Monad.State   (evalStateT) -- For extracting Settings from StateT
 
 main :: IO()
@@ -21,10 +23,12 @@ testPrint websiteFolder = do
     additionalDepth <- evalStateT (getSetting getAdditionalDepth) Nothing
     rootPath <- buildDirTree websiteFolder depth
     websites <- findWebsites rootPath
+    --B.putStr $ encodePretty $ websites
     websiteExpanded <- mapM (flip expandWebsiteDirTree additionalDepth) websites
-    websiteWithTypes <- mapM findWebsiteVersion websiteExpanded
-    websiteWithPlugins <- mapM findWebsitePlugins websiteWithTypes
-    putStrLn $ show $ encode websiteWithPlugins
+    websiteWithVersion <- mapM findWebsiteVersion websiteExpanded
+    --B.putStr $ encodePretty $ websiteWithVersion
+    websiteWithPlugins <- mapM findWebsitePlugins websiteWithVersion
+    B.putStr $ encodePretty $ websiteWithPlugins
 
 expandWebsiteDirTree :: Website -> Int -> IO Website
 expandWebsiteDirTree (Website a b c xs) d = Website a b c <$> expandDirTree xs d

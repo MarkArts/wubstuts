@@ -30,6 +30,7 @@ executable wubstuts
                        split,
                        bytestring,
                        aeson,
+                       aeson-pretty,
                        directory,
                        base        >=4.7
   hs-source-dirs:      src
