@@ -16,3 +16,4 @@ cabal.sandbox.config
 *.hp
 .gitconfig
 config/settings.json
+.stack-work/
