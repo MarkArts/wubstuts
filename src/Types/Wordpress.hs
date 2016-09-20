@@ -4,7 +4,7 @@ import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
 import Data.Tree
 import Data.ByteString (ByteString)
-import DirTree
+import qualified DirTree as DT
 import Types
 
 pluginsFolder :: [FilePath]
@@ -16,7 +16,7 @@ versionFileLocation = ["wp-includes", "version.php"]
 -- todo: add error reporting
 wpVersion :: Website -> IO Version
 wpVersion (Website Wordpress _ _ t) = do
-    case traverse t versionFileLocation of
+    case DT.traverse t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
             result <- parseFromFile wpParseVersionFile (rootLabel f)

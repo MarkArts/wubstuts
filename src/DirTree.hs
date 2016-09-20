@@ -8,6 +8,7 @@ import Settings
 import Control.Applicative
 import Types
 import Control.Exception
+import Prelude hiding (traverse)
 
 traverse :: DirTree -> [FilePath] -> Maybe (DirTree)
 traverse (Node _ []) _ = Nothing

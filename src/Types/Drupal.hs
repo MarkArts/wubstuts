@@ -6,19 +6,19 @@ import System.FilePath.Posix
 import Data.Tree
 import Data.ByteString (ByteString)
 import System.Directory
-import DirTree
+import qualified DirTree as DT
 import Types
 
 versionFileLocation :: [FilePath]
 versionFileLocation = ["includes", "bootstrap.inc"]
 
 dpModuleFolders :: Website -> [DirTree]
-dpModuleFolders (Website _ _ _ t) = findChilds t ((==) "modules" . takeFileName . rootLabel )
+dpModuleFolders (Website _ _ _ t) = DT.findChilds t ((==) "modules" . takeFileName . rootLabel )
 
 
 dpVersion :: Website -> IO Version
 dpVersion (Website Drupal _ _ t) = do
-    case traverse t versionFileLocation of
+    case DT.traverse t versionFileLocation of
         Nothing -> return UnknownVersion
         Just f -> do
             result <- parseFromFile dpParseVersionFile (rootLabel f)
@@ -28,7 +28,7 @@ dpVersion (Website Drupal _ _ t) = do
 dpVersion _ = error "Can't lookup Drupal version for a non Drupal website"
 
 dpModules :: Website -> IO [Plugin]
-dpModules w = mapM dpFindModuleInfo $ map rootLabel $ concat $ map (flip findTopChilds infos) $ dpModuleFolders w
+dpModules w = mapM dpFindModuleInfo $ map rootLabel $ concat $ map (flip DT.findTopChilds infos) $ dpModuleFolders w
                               where infos (Node n _) = takeExtension n == ".info"
 
 dpFindModulesIn :: DirTree -> [FilePath]
