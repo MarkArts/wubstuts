@@ -17,6 +17,7 @@ traverse t@(Node a _) ps = case getChild t ((==) (a </> (head ps) ) . rootLabel)
                         Just child -> traverse child (tail ps)
                         Nothing -> Nothing
 
+-- get only checks the direct children of the given tree
 getChild :: (Eq a) => Tree a -> (Tree a -> Bool) -> Maybe (Tree a)
 getChild (Node _ []) _ = Nothing
 getChild n f = case getChilds n f of
@@ -31,6 +32,7 @@ getChildFile :: Tree FilePath -> FilePath -> Maybe (Tree FilePath)
 getChildFile (Node _ []) _ = Nothing
 getChildFile t@(Node n _) p = getChild t ((==) (n </> p) . rootLabel)
 
+-- find checks all the children of the given tree
 findChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
 findChilds n@(Node _ xs) f
                 | f n = n : childs
