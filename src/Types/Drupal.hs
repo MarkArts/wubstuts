@@ -72,9 +72,7 @@ dpInfoVariable :: String -> Parsec ByteString () String
 dpInfoVariable v = do
     manyTill anyChar (try $ varDecleration)
     spaces >> char '=' >> spaces
-    var <- between stringLike stringLike contents
-    endOfLine
-    return var
+    between stringLike stringLike contents
   where
     varDecleration = string v >> (space <|> char '=')
     stringLike = optional (char '\'' <|> char '"')
