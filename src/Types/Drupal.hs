@@ -9,22 +9,22 @@ import System.Directory
 import qualified DirTree as DT
 import Types
 
-versionFileLocation :: [FilePath]
-versionFileLocation = ["includes", "bootstrap.inc"]
+dpFindVersionFileLocation :: Website -> Maybe (FilePath)
+dpFindVersionFileLocation (Website _ _ _ t) = DT.findChild t ((==) "bootstrap.inc" . filename) >>= return . rootLabel
+                                              where filename = takeFileName . rootLabel 
+
+dpVersionFileLocation :: Website -> FilePath
+dpVersionFileLocation (Website _ _ _ t) = rootLabel t </> "includes" </> "bootstrap.inc"
 
 dpModuleFolders :: Website -> [DirTree]
 dpModuleFolders (Website _ _ _ t) = DT.findChilds t ((==) "modules" . takeFileName . rootLabel )
 
-
 dpVersion :: Website -> IO Version
-dpVersion (Website Drupal _ _ t) = do
-    case DT.traverse t versionFileLocation of
-        Nothing -> return UnknownVersion
-        Just f -> do
-            result <- parseFromFile dpParseVersionFile (rootLabel f)
-            case result of
-                Left _ -> return UnknownVersion
-                Right v -> return $ Version v
+dpVersion w@(Website Drupal _ _ _) = do
+        result <- parseFromFile dpParseVersionFile (dpVersionFileLocation w)
+        case result of
+            Left _ -> return $ UnknownVersion
+            Right v -> return $ Version v
 dpVersion _ = error "Can't lookup Drupal version for a non Drupal website"
 
 dpModules :: Website -> IO [Plugin]
@@ -48,10 +48,10 @@ dpFindModuleInfo p = do
 dpParseVersionFile :: Parsec ByteString () String
 dpParseVersionFile = do
     manyTill anyChar (try $ string "define('VERSION'")
-    char ','
-    version <- between (char '\'') (char '\'') (many1 anyChar)
-    string ");"
-    return version
+    manyTill anyChar anyQuote
+    manyTill anyChar anyQuote
+  where
+    anyQuote = char '\'' <|> char '"'
 
 -- we use lookAhead because the version and name may not be in that order
 dpParseModuleInfo :: Parsec ByteString () Plugin

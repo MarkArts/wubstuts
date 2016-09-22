@@ -20,8 +20,8 @@ wpVersion :: Website -> IO Version
 wpVersion w@(Website Wordpress _ _ _) = do
     case wpVersionFileLocation w of
         Nothing -> return UnknownVersion
-        Just f -> do
-            result <- parseFromFile wpParseVersionFile f
+        Just file -> do
+            result <- parseFromFile wpParseVersionFile file
             case result of
                 Left e -> error $ show e
                 Right v -> return $ Version v
