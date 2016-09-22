@@ -2,6 +2,7 @@ module Types.Wordpress where
 
 import Text.Parsec
 import Text.Parsec.ByteString (parseFromFile)
+import System.FilePath.Posix
 import Data.Tree
 import Data.ByteString (ByteString)
 import qualified DirTree as DT
@@ -10,13 +11,13 @@ import Types
 pluginsFolder :: [FilePath]
 pluginsFolder = ["wp-content", "plugins"]
 
-versionFileLocation :: [FilePath]
-versionFileLocation = ["wp-includes", "version.php"]
+wpVersionFileLocation :: Website -> Maybe (DirTree)
+wpVersionFileLocation (Website _ _ _ t) = DT.findChild t ((==) "version.php" . takeFileName . rootLabel )
 
 -- todo: add error reporting
 wpVersion :: Website -> IO Version
-wpVersion (Website Wordpress _ _ t) = do
-    case DT.traverse t versionFileLocation of
+wpVersion w@(Website Wordpress _ _ _) = do
+    case wpVersionFileLocation w of
         Nothing -> return UnknownVersion
         Just f -> do
             result <- parseFromFile wpParseVersionFile (rootLabel f)

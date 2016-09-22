@@ -37,6 +37,11 @@ findChilds n@(Node _ xs) f
                 | otherwise = childs
                 where childs = concat $ map (flip findChilds f) xs
 
+findChild :: (Eq a) => Tree a -> (Tree a -> Bool) -> Maybe (Tree a)
+findChild n f = case findChilds n f of
+                            [] -> Nothing
+                            (c:_) -> Just c               
+
 findTopChilds :: (Eq a) => Tree a -> (Tree a -> Bool) -> [Tree a]
 findTopChilds n@(Node _ xs) f = case getChild n f of
                                     Just t -> [t]
