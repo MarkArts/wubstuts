@@ -97,6 +97,6 @@ appVersion w = case getWebsiteType w of
 -- TODO; (Mats Rietdijk) this should be made into an instance
 appPlugins :: Website -> IO [Plugin]
 appPlugins w = case getWebsiteType w of
-    Wordpress -> return []
+    Wordpress -> wpPlugins w
     Drupal    -> dpModules w
     _         -> return []
